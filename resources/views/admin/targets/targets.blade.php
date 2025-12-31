@@ -26,6 +26,7 @@
                 <th class="border px-2 py-1">Start Date</th>
                 <th class="border px-2 py-1">End Date</th>
                 <th class="border px-2 py-1">Status</th>
+                <th class="border px-2 py-1">View</th>
             </tr>
         </thead>
         <tbody>
@@ -53,7 +54,10 @@
                         {{ $status }}
                     </span>
                 </td>
-                
+                <td class="border px-2 py-1">
+                    <a href="{{ route('admin.products.details', $target->product->id) }}" 
+                       class="bg-blue-600 text-white px-2 py-1 rounded">View Targets</a>
+                </td>
             </tr>
             @empty
             <tr>

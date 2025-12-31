@@ -49,7 +49,7 @@
 
             <div class="mb-4">
                 <label for="role" class="block font-medium text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
-                <select name="role" id="role"
+                <!-- <select name="role" id="role"
                         class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required>
                     <option value="">-- Select Role --</option>
@@ -58,11 +58,18 @@
                             {{ $role->name }}
                         </option>
                     @endforeach
+                </select> -->
+                <select id="role"
+                        class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
+                        disabled>
+                    <option value="Executive" selected>Executive</option>
                 </select>
+
+                <input type="hidden" name="role" value="Executive">
             </div>
 
             <div class="mb-6">
-                <label for="company_id" class="block font-medium text-gray-700 mb-1">Company</label>
+                <!-- <label for="company_id" class="block font-medium text-gray-700 mb-1">Company</label>
                 <select name="company_id" id="company_id"
                         class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Select Company --</option>
@@ -71,7 +78,10 @@
                             {{ $company->name }}
                         </option>
                     @endforeach
-                </select>
+                </select> -->
+                @if($companies->isNotEmpty())
+                    <input type="hidden" name="company_id" value="{{ $companies->first()->id }}">
+                @endif
             </div>
 
             <div class="flex items-center gap-3">

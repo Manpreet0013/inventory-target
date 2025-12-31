@@ -23,7 +23,7 @@
                 <th class="border px-2 py-1">#</th>
                 <th class="border px-2 py-1">Name</th>
                 <th class="border px-2 py-1">Email</th>
-                <th class="border px-2 py-1">Company</th>
+                <!-- <th class="border px-2 py-1">Company</th> -->
                 <th class="border px-2 py-1">Role</th>
                 <th class="border px-2 py-1">Actions</th>
             </tr>
@@ -34,7 +34,7 @@
                 <td class="border px-2 py-1">{{ $index + 1 }}</td>
                 <td class="border px-2 py-1">{{ $user->name }}</td>
                 <td class="border px-2 py-1">{{ $user->email }}</td>
-                <td class="border px-2 py-1">{{ $user->company?->name ?? '-' }}</td>
+                <!-- <td class="border px-2 py-1">{{ $user->company?->name ?? '-' }}</td> -->
                 <td class="border px-2 py-1">{{ $user->roles->pluck('name')->join(', ') }}</td>
                 <td class="border px-2 py-1">
                     <a href="{{ route('admin.users.edit', $user->id) }}" 
@@ -53,6 +53,13 @@
                             </button>
                         @endif
                     </form>
+                    @if($user->roles->pluck('name')->contains('Executive'))
+                        <a href="{{ route('admin.users.report', $user->id) }}"
+                           class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 ml-1">
+                            View Report
+                        </a>
+                    @endif
+
                 </td>
             </tr>
             @empty

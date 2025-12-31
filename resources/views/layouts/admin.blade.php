@@ -31,11 +31,11 @@
                 User Management
             </a>
 
-            <a href="/admin/companies"
+            <!-- <a href="/admin/companies"
                class="block px-4 py-2 rounded-lg transition
                {{ request()->is('admin/companies*') ? $activeClass : 'hover:bg-slate-700' }}">
                 Companies Management
-            </a>
+            </a> -->
 
             <a href="/admin/product-listing"
                class="block px-4 py-2 rounded-lg transition

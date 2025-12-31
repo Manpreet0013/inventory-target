@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Product extends Model
 {
     use HasFactory;
 
-    // Add your form fields here
     protected $fillable = [
         'name',
         'composition',
@@ -18,16 +18,22 @@ class Product extends Model
         'expiry_date',
     ];
 
+    // ✅ ADD THIS
+    protected $casts = [
+        'expiry_date' => 'date',
+    ];
+
     public function targets()
     {
         return $this->hasMany(Target::class);
     }
+
     /** Product is expired or not */
     public function isExpired()
     {
         return $this->type === 'expiry'
             && $this->expiry_date
-            && $this->expiry_date < now()->toDateString();
+            && $this->expiry_date->isPast(); // ✅ FIXED
     }
 
     /** Check if all targets are completed */
@@ -38,6 +44,7 @@ class Product extends Model
                 return false;
             }
         }
+
         return $this->targets->isNotEmpty();
     }
 }

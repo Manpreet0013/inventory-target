@@ -11,24 +11,40 @@ use App\Notifications\ExpiryProductNotification;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::whereNotNull('expiry_date')
+        $products = Product::query()
+            ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '<=', now()->addMonths(6))
             ->orderBy('expiry_date')
-            ->get();
+            ->paginate(15); // ✅ pagination for future data
 
         return view('inventory.dashboard', compact('products'));
     }
 
-    public function notifyAdmin($id)
+    public function notifyAdmin(Product $product)
     {
-        $product = Product::findOrFail($id);
+        // 🔒 extra safety
+        abort_if(!$product->expiry_date, 404);
+
+        // Optional: prevent duplicate notifications
+        if ($product->notified_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin already notified'
+            ]);
+        }
 
         $admins = User::role('Admin')->get();
 
         Notification::send($admins, new ExpiryProductNotification($product));
 
-        return response()->json(['success' => true]);
+        // Optional column (recommended)
+        $product->update(['notified_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin notified successfully'
+        ]);
     }
 }

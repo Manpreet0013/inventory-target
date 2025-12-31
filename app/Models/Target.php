@@ -46,34 +46,31 @@ class Target extends Model
 
     public function sales()
     {
+        // Only approved sales count
         return $this->hasMany(Sale::class);
     }
 
-    /** Total achieved value */
-    public function achievedValue()
+    public function allSales()
     {
-        return $this->target_type === 'box'
-            ? $this->sales()->sum('boxes_sold')
-            : $this->sales()->sum('amount');
+        // All sales, for table/details
+        return $this->hasMany(Sale::class);
     }
 
-    /** Remaining target */
-    // public function remainingValue()
-    // {
-    //     return max($this->target_value - $this->achievedValue(), 0);
-    // }
+    public function achievedValue()
+    {
+        $ownSales = $this->sales()->sum($this->target_type === 'box' ? 'boxes_sold' : 'amount');
+
+        $childSales = $this->children()->get()->sum(fn($c) => $c->achievedValue());
+
+        return $ownSales + $childSales;
+    }
 
     public function remainingValue()
     {
-        // Total target minus sum of all children and completed sales
-        $childrenSum = $this->children()
-                            ->where('status', '!=', 'rejected')
-                            ->sum('target_value');
-
-        $salesSum = $this->sales()->sum($this->target_type === 'box' ? 'boxes_sold' : 'amount');
-
-        return max($this->target_value - $childrenSum - $salesSum, 0);
+        return max($this->target_value - $this->achievedValue(), 0);
     }
+
+
     /** Target completed or not */
     public function isComplete()
     {
@@ -124,5 +121,19 @@ class Target extends Model
     {
         return $this->parent_id === null && $this->remainingValue() > 0;
     }
+
+    public function allSalesRecursive()
+    {
+        // Include own sales
+        $sales = $this->sales()->get();
+
+        // Include sales from children targets
+        foreach ($this->children()->with('sales')->get() as $child) {
+            $sales = $sales->merge($child->allSalesRecursive());
+        }
+
+        return $sales;
+    }
+
 
 }   

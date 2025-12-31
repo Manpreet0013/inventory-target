@@ -73,7 +73,9 @@
 @else
 <p class="text-gray-500">No targets assigned for this product.</p>
 @endif
-
-<a href="{{ route('admin.products') }}" class="inline-block mt-4 bg-gray-600 text-white px-3 py-1 rounded">Back to Products</a>
-
+<br>
+<a href="{{ url()->previous() }}"
+       class="bg-gray-500 text-white px-4 py-2 rounded">
+        ← Back
+    </a>
 @endsection

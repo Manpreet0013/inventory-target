@@ -7,6 +7,11 @@
 <h2 class="text-2xl font-bold mb-4">
     Add Sale – {{ $target->product->name }}
 </h2>
+<div class="mb-3 text-sm text-gray-700">
+    <p><strong>Product:</strong> {{ $target->product->name }}</p>
+    <p><strong>Target Type:</strong> {{ ucfirst($target->target_type) }}</p>
+    <p><strong>Remaining:</strong> {{ $target->remainingValue() }}</p>
+</div>
 
 <div class="max-w-md bg-white p-4 border rounded">
 
@@ -61,7 +66,7 @@
         Save Sale
     </button>
 
-    <a href="{{ route('executive.dashboard') }}" class="bg-gray-400 text-white px-4 py-2 rounded">
+    <a href="{{ route('executive.targets.assigned') }}" class="bg-gray-400 text-white px-4 py-2 rounded">
                     Back
                 </a>
 
