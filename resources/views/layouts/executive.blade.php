@@ -34,6 +34,25 @@
                📌 Products By executive
             </a>
 
+            @php
+                $activeClass = 'bg-slate-700 text-white';
+                $unreadCount = auth()->user()->unreadNotifications()->count();
+            @endphp
+
+            <a href="{{ route('executive.notifications') }}"
+               class="flex items-center justify-between px-4 py-2 rounded-lg transition
+               {{ request()->is('executive/notifications*') ? $activeClass : 'hover:bg-slate-700' }}">
+                
+                <span>Notifications</span>
+
+                @if($unreadCount > 0)
+                    <span class="ml-2 inline-flex items-center justify-center
+                        w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full">
+                        {{ $unreadCount }}
+                    </span>
+                @endif
+            </a>
+
 
             @php use App\Helpers\RoleHelper; @endphp
             <a href="{{ route('role.profile', RoleHelper::slug(auth()->user()->roles->first()->name)) }}"

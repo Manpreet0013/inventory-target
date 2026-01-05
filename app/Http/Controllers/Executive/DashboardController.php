@@ -6,36 +6,49 @@ use App\Http\Controllers\Controller;
 use App\Models\Target;
 use App\Models\Sale;
 use App\Models\User;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Notifications\InventoryNotification;
 
 class DashboardController extends Controller
 {
-    // Dashboard landing
+    protected $admins;
+
+    public function __construct()
+    {
+        $this->admins = User::role('Admin')->get();
+    }
+
+    // ================= DASHBOARD =================
     public function index()
     {
         return view('executive.dashboard');
     }
+
+    // ================= MANAGED TARGETS =================
     public function managedTargets()
     {
         $executiveId = auth()->id();
 
         $targets = Target::with(['product','children','sales'])
-                    ->whereNull('parent_id')
-                    ->where('status', '!=', 'rejected') // 🔥 ADD THIS
-                    ->where(function ($q) use ($executiveId) {
-                        $q->where('executive_id', $executiveId)
-                          ->orWhere('created_by', $executiveId);
-                    })
-                    ->latest()
-                    ->paginate(10);
+            ->whereNull('parent_id')
+            ->where('status','!=','rejected')
+            ->where(function ($q) use ($executiveId) {
+                $q->where('executive_id',$executiveId)
+                  ->orWhere('created_by',$executiveId);
+            })
+            ->latest()
+            ->paginate(10);
 
         return view('executive.targets.managed', compact('targets'));
     }
+
+    // ================= ASSIGNED TARGETS =================
     public function assignedTargets()
     {
         $executiveId = auth()->id();
 
-        $assignedTargets = Target::where('executive_id', $executiveId)
+        $assignedTargets = Target::where('executive_id',$executiveId)
             ->whereNotNull('parent_id')
             ->whereHas('creator', fn ($q) => $q->role('Executive'))
             ->with(['product','creator'])
@@ -44,38 +57,41 @@ class DashboardController extends Controller
 
         return view('executive.targets.assigned', compact('assignedTargets'));
     }
+
+    // ================= ACCEPT PARTIAL =================
     public function partialAccept(Request $request, Target $target)
     {
-        abort_if($target->executive_id !== auth()->id(), 403);
-        abort_if($target->status !== 'pending', 422, 'Target already processed');
+        abort_if($target->executive_id !== auth()->id(),403);
+        abort_if($target->status !== 'pending',422);
 
         $request->validate([
-            'accepted_value' => 'required|integer|min:1|max:' . $target->target_value
+            'accepted_value'=>'required|integer|min:1|max:'.$target->target_value
         ]);
 
-        // Reject original target
-        $target->update(['status' => 'rejected']);
+        $target->update(['status'=>'rejected']);
 
-        // Create new accepted target
         Target::create([
-            'product_id'   => $target->product_id,
-            'executive_id' => $target->executive_id,
-            'target_type'  => $target->target_type,
-            'target_value' => $request->accepted_value,
-            'start_date'   => $target->start_date,
-            'end_date'     => $target->end_date,
-            'status'       => 'accepted',
-            'parent_id'    => $target->id,
-            'created_by'   => $target->created_by
+            'product_id'=>$target->product_id,
+            'executive_id'=>$target->executive_id,
+            'target_type'=>$target->target_type,
+            'target_value'=>$request->accepted_value,
+            'start_date'=>$target->start_date,
+            'end_date'=>$target->end_date,
+            'status'=>'accepted',
+            'parent_id'=>$target->id,
+            'created_by'=>$target->created_by,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Partial target accepted successfully'
-        ]);
+        foreach ($this->admins as $admin) {
+            $admin->notify(new InventoryNotification(
+                auth()->user()->name.' accepted the target'
+            ));
+        }
+
+        return response()->json(['success'=>true]);
     }
 
-    // View sales for a target
+    // ================= SALES LIST =================
     public function sales(Target $target)
     {
         abort_if(
@@ -84,61 +100,88 @@ class DashboardController extends Controller
             403
         );
 
-        $target->load(['sales.executive', 'children.sales.executive']);
+        $target->load(['sales.executive','children.sales.executive']);
 
         return view('executive.target-sales', compact('target'));
     }
 
-    // Split target view
+    // ================= SPLIT VIEW =================
     public function splitView(Target $target)
     {
         $executives = User::role('Executive')
-            ->where('id', '!=',auth()->id())
+            ->where('id','!=',auth()->id())
             ->get();
 
-        return view('executive.target-split', compact('target', 'executives'));
+        return view('executive.target-split', compact('target','executives'));
     }
 
-    // Show target details
+    // ================= SHOW TARGET =================
     public function show(Target $target)
     {
-        abort_if($target->executive_id !== auth()->id(), 403);
-        $target->load(['product', 'sales', 'children.sales']);
+        abort_if($target->executive_id !== auth()->id(),403);
+
+        $target->load(['product','sales','children.sales']);
+
         return view('executive.target-details', compact('target'));
     }
 
-    // Accept target
+    // ================= ACCEPT TARGET =================
     public function accept(Target $target)
     {
-        abort_if($target->executive_id !== auth()->id(), 403);
+        abort_if($target->executive_id !== auth()->id(),403);
 
         if ($target->status !== 'pending') {
-            return response()->json(['success'=>false, 'message'=>'Target already processed'], 422);
+            return response()->json(['success'=>false],422);
         }
 
         $target->update(['status'=>'accepted']);
 
-        return response()->json(['success'=>true, 'message'=>'Target accepted successfully']);
+        foreach ($this->admins as $admin) {
+            $admin->notify(new InventoryNotification(
+                auth()->user()->name.' accepted the target',
+                route('admin.products.details',$target->product_id)
+            ));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Target accepted successfully'
+        ]);
+
     }
 
-    // Reject target
+    // ================= REJECT TARGET =================
     public function reject(Target $target)
     {
-        abort_if($target->executive_id !== auth()->id(), 403);
+        abort_if($target->executive_id !== auth()->id(),403);
 
         $target->update(['status'=>'rejected']);
 
-        return response()->json(['success'=>true, 'message'=>'Target rejected successfully']);
+        foreach ($this->admins as $admin) {
+            $admin->notify(new InventoryNotification(
+                auth()->user()->name.' rejected the target',
+                route('admin.products.details',$target->product_id)
+            ));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Target rejected successfully'
+        ]);
+
     }
 
-    // Create sale form
+    // ================= CREATE SALE =================
     public function createSale(Target $target)
     {
         abort_if($target->executive_id !== auth()->id(), 403);
+
+        $target->load(['sales.executive']);
+
         return view('executive.sales.create', compact('target'));
     }
 
-    // Store sale
+    // ================= STORE SALE =================
     public function storeSale(Request $request)
     {
         $request->validate([
@@ -147,69 +190,60 @@ class DashboardController extends Controller
             'amount'=>'nullable|numeric|min:1',
             'party_name'=>'required|string|max:255',
             'sale_date'=>'required|date',
-            'invoice_number' => 'nullable|string|max:50|unique:sales,invoice_number',
+            'invoice_number'=>'nullable|string|max:50|unique:sales,invoice_number',
         ]);
 
         $target = Target::with('sales')
-            ->where('id', $request->target_id)
-            ->where('executive_id', auth()->id())
+            ->where('id',$request->target_id)
+            ->where('executive_id',auth()->id())
             ->firstOrFail();
 
-        $field = $target->target_type==='box' ? 'boxes_sold' : 'amount';
-        $value = $request->$field ?? 0;
-
-        if ($value > $target->remainingValue() || $value <= 0) {
-            return response()->json(['success'=>false, 'errors'=>[$field=>["Invalid value"]]],422);
+        $status = 'pending';
+        if($target->parent_id === NULL){
+            $status = 'approved';
         }
 
-        $sale = Sale::create([
+        $field = $target->target_type === 'box' ? 'boxes_sold' : 'amount';
+        $value = $request->$field;
+
+        abort_if($value <= 0 || $value > $target->remainingValue(),422);
+
+        Sale::create([
             'target_id'=>$target->id,
             'boxes_sold'=>$target->target_type==='box' ? $value : null,
             'amount'=>$target->target_type==='amount' ? $value : null,
             'party_name'=>$request->party_name,
             'sale_date'=>$request->sale_date,
-            'status'=>'pending',
+            'status'=>$status,
             'executive_id'=>auth()->id(),
-            'invoice_number' => $request->invoice_number
+            'invoice_number'=>$request->invoice_number,
         ]);
 
-        // Notify admins
-        User::role('Admin')->each(fn($admin)=>$admin->notify(new \App\Notifications\SaleAddedNotification($sale)));
+        foreach ($this->admins as $admin) {
+            $admin->notify(new InventoryNotification(
+                auth()->user()->name.' added a new sale',
+                route('admin.sales.index')
+            ));
+        }
 
-        return response()->json(['success'=>true,'message'=>'Sale added successfully']);
+        return response()->json(['success'=>true]);
     }
 
-    // Reassign target
-    public function reassign(Request $request, Target $target)
-    {
-        abort_if($target->executive_id !== auth()->id(),403);
-
-        $request->validate(['executive_id'=>'required|exists:users,id']);
-
-        $newExec = User::findOrFail($request->executive_id);
-        abort_if($newExec->company_id !== auth()->user()->company_id,403);
-
-        $target->update(['executive_id'=>$newExec->id]);
-
-        return back()->with('success','Target reassigned successfully!');
-    }
-
-    // Split target
+    // ================= SPLIT TARGET =================
     public function split(Request $request, Target $target)
     {
         abort_if($target->executive_id !== auth()->id(),403);
-        abort_if($target->parent_id !== null,403,"Cannot split child target");
-        abort_if($target->status !== 'accepted',422,"Accept target before splitting");
+        abort_if($target->parent_id !== null,403);
+        abort_if($target->status !== 'accepted',422);
 
         $request->validate([
             'executive_id'=>'required|exists:users,id',
             'value'=>'required|integer|min:1'
         ]);
 
-        abort_if($request->value > $target->remainingValue(),422,"Value exceeds remaining target");
+        abort_if($request->value > $target->remainingValue(),422);
 
         $newExec = User::findOrFail($request->executive_id);
-        abort_if($newExec->company_id !== auth()->user()->company_id,403);
 
         Target::create([
             'product_id'=>$target->product_id,
@@ -220,54 +254,42 @@ class DashboardController extends Controller
             'end_date'=>$target->end_date,
             'status'=>'pending',
             'parent_id'=>$target->id,
-            'created_by'=>auth()->id()
+            'created_by'=>auth()->id(),
         ]);
 
-        return response()->json(['success'=>true,'message'=>'Target split successfully']);
+        foreach ($this->admins as $admin) {
+            $admin->notify(new InventoryNotification(
+                'Target assigned to '.$newExec->name,
+                route('admin.products.details',$target->product_id)
+            ));
+        }
+
+        return response()->json(['success'=>true]);
     }
 
-    // Executive report with filters
+    // ================= EXECUTIVE REPORT =================
     public function report(Request $request)
     {
-        $executiveId = auth()->id();
-        $from = $request->from;
-        $to = $request->to;
+        $user = auth()->user();
+        $executiveId = $user->id;
 
-        $targetsQuery = Target::with([
-            'product',
-            'sales'=>fn($q)=>$q->where('executive_id',$executiveId)->where('status','approved')
-                ->when($from, fn($q)=>$q->whereDate('sale_date','>=',$from))
-                ->when($to, fn($q)=>$q->whereDate('sale_date','<=',$to)),
-            'children.sales.executive',
-            'creator'
-        ])->where('executive_id',$executiveId)
-          ->when($from, fn($q)=>$q->whereDate('start_date','>=',$from))
-          ->when($to, fn($q)=>$q->whereDate('end_date','<=',$to));
+        $adminProductCount = Product::whereHas('targets', function ($q) use ($executiveId) {
+            $q->whereNull('parent_id')
+              ->where('status','!=','rejected')
+              ->where(function ($q) use ($executiveId) {
+                  $q->where('executive_id',$executiveId)
+                    ->orWhere('created_by',$executiveId);
+              });
+        })->distinct()->count();
 
-        $targets = $targetsQuery->get();
+        $executiveProductCount = Product::whereHas('targets', function ($q) use ($executiveId) {
+            $q->where('created_by',$executiveId);
+        })->distinct()->count();
 
-        return view('executive.report', compact('targets','from','to'));
-    }
-    public function acceptPartial(Request $request, Target $target)
-    {
-        abort_if($target->executive_id !== auth()->id(), 403);
-        abort_if($target->status !== 'pending', 422);
-
-        $request->validate([
-            'value' => 'required|integer|min:1'
-        ]);
-
-        abort_if($request->value > $target->target_value, 422);
-
-        $target->update([
-            'target_value' => $request->value,
-            'status' => 'accepted'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Partial target accepted successfully'
+        return view('executive.report',[
+            'adminProductCount'=>$adminProductCount,
+            'executiveProductCount'=>$executiveProductCount,
+            'notifications'=>$user->notifications()->latest()->take(5)->get(),
         ]);
     }
-    
 }

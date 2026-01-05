@@ -29,7 +29,7 @@ class UserReportController extends Controller
                 'sales' => function($sq) use ($from, $to) {
                     if ($from) $sq->whereDate('sale_date', '>=', $from);
                     if ($to) $sq->whereDate('sale_date', '<=', $to);
-                    $sq->where('status', 'approved'); // Only approved sales
+                    //$sq->where('status', 'approved'); // Only approved sales
                 },
                 'creator',
                 'executive'

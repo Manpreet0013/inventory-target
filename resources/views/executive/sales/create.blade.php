@@ -143,6 +143,67 @@
 </form>
 
 </div>
+<br>
+{{-- SALES LIST --}}
+@if($target->sales->count())
+<div class="mt-10 max-w-4xl bg-white border rounded-xl p-5">
+
+    <h3 class="text-xl font-bold mb-4">
+        Sales List ({{ $target->sales->count() }})
+    </h3>
+
+    <table class="w-full border text-sm">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="border px-3 py-2 text-left">Invoice</th>
+                <th class="border px-3 py-2 text-left">Party</th>
+                <th class="border px-3 py-2 text-center">Date</th>
+                <th class="border px-3 py-2 text-right">
+                    {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
+                </th>
+                <th class="border px-3 py-2 text-center">Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach($target->sales as $sale)
+            <tr class="hover:bg-gray-50">
+                <td class="border px-3 py-2">
+                    {{ $sale->invoice_number ?? '—' }}
+                </td>
+
+                <td class="border px-3 py-2">
+                    {{ $sale->party_name }}
+                </td>
+
+                <td class="border px-3 py-2 text-center">
+                    {{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}
+                </td>
+
+                <td class="border px-3 py-2 text-right font-semibold">
+                    {{ $target->target_type === 'box' ? $sale->boxes_sold : $sale->amount }}
+                </td>
+
+                <td class="border px-3 py-2 text-center">
+                    <span class="
+                        px-2 py-1 rounded text-xs font-semibold
+                        {{ $sale->status === 'approved' ? 'bg-green-100 text-green-700' : '' }}
+                        {{ $sale->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                        {{ $sale->status === 'rejected' ? 'bg-red-100 text-red-700' : '' }}
+                    ">
+                        {{ ucfirst($sale->status) }}
+                    </span>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@else
+<div class="mt-10 text-gray-500 text-sm">
+    No sales recorded for this target yet.
+</div>
+@endif
 
 {{-- AJAX --}}
 <script>

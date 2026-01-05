@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use App\Notifications\InventoryNotification;
 
 class DashboardController extends Controller
 {
@@ -170,9 +172,14 @@ class DashboardController extends Controller
             'status'       => 'pending',
         ]);
 
-        $target->executive->notify(
-            new \App\Notifications\TargetAssignedNotification($target)
-        );
+        $executive = User::find($validated['executive_id']);
+
+        if ($executive) {
+            $executive->notify(new InventoryNotification(
+                'New target assigned for ' . $product->name,
+                route('executive.targets.managed', $target->id)
+            ));
+        }
 
         return response()->json([
             'success' => true,
@@ -221,22 +228,46 @@ class DashboardController extends Controller
     }
     public function sales(Request $request)
     {
-        $status = $request->status;
+        $status        = $request->status;
+        $targetId      = $request->target_id;
+        $executiveId   = $request->executive_id;
 
+        // BASE QUERY
+        $salesQuery = Sale::with(['executive', 'target.product'])
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($targetId, fn ($q) => $q->where('target_id', $targetId))
+            ->when($executiveId, fn ($q) => $q->where('executive_id', $executiveId));
+
+        // STATS (respect filters)
         $stats = [
-            'total'    => Sale::count(),
-            'approved' => Sale::where('status','approved')->sum('amount'),
-            'pending'  => Sale::where('status','pending')->count(),
-            'rejected' => Sale::where('status','rejected')->count(),
+            'total'    => (clone $salesQuery)->count(),
+            'approved' => (clone $salesQuery)->where('status','approved')->sum('amount'),
+            'pending'  => (clone $salesQuery)->where('status','pending')->count(),
+            'rejected' => (clone $salesQuery)->where('status','rejected')->count(),
         ];
 
-        $sales = Sale::with('executive')
-            ->when($status, fn($q) => $q->where('status',$status))
+        // SALES DATA
+        $sales = $salesQuery
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('admin.sales.index', compact('sales','status','stats'));
+        // FILTER DATA
+        $targets = Target::with('product')
+                    ->whereNull('parent_id') // ONLY ADMIN / MAIN TARGETS
+                    ->latest()
+                    ->get();
+        $executives = User::role('Executive')->get();
+
+        return view('admin.sales.index', compact(
+            'sales',
+            'status',
+            'stats',
+            'targets',
+            'executives'
+        ));
     }
+
     public function bulkApprove(Request $request)
     {
         Sale::whereIn('id', $request->sales ?? [])
@@ -244,23 +275,39 @@ class DashboardController extends Controller
 
         return back()->with('success','Selected sales approved');
     }
-    public function export()
+    public function export(Request $request)
     {
-        $sales = Sale::all();
+        $sales = Sale::with(['executive','target.product'])
+            ->when($request->status, fn ($q) => $q->where('status',$request->status))
+            ->when($request->target_id, fn ($q) => $q->where('target_id',$request->target_id))
+            ->when($request->executive_id, fn ($q) => $q->where('executive_id',$request->executive_id))
+            ->get();
 
         $headers = [
-            "Content-type" => "text/csv",
+            "Content-type"        => "text/csv",
             "Content-Disposition" => "attachment; filename=sales.csv",
         ];
 
         $callback = function () use ($sales) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Invoice','Party','Amount','Status','Date']);
+            fputcsv($file, [
+                'Invoice',
+                'Party',
+                'Target',
+                'Target Type',
+                'Executive',
+                'Amount / Qty',
+                'Status',
+                'Sale Date'
+            ]);
 
             foreach ($sales as $sale) {
                 fputcsv($file, [
                     $sale->invoice_number,
                     $sale->party_name,
+                    $sale->target?->product?->name,
+                    $sale->target?->target_type,
+                    $sale->executive?->name,
                     $sale->amount,
                     $sale->status,
                     $sale->sale_date
@@ -271,6 +318,7 @@ class DashboardController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
     public function updateStatus(Request $request, Sale $sale)
     {
         $request->validate([
@@ -285,5 +333,18 @@ class DashboardController extends Controller
             'success' => true,
             'status'  => $sale->status
         ]);
+    }
+    public function notification()
+    {
+        $notifications = Auth::user()->notifications()->latest()->get(); 
+        return view('admin.notifications.index', compact('notifications'));
+    }
+
+    public function markAsRead($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
+
+        return redirect()->back();
     }
 }

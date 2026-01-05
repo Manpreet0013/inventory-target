@@ -55,6 +55,22 @@
                 Total Sales
             </a>
 
+           @php $activeClass = 'bg-slate-700 text-white'; @endphp
+
+            <a href="{{ route('admin.notifications') }}"
+               class="block px-4 py-2 rounded-lg transition
+               {{ request()->is('admin/notifications*') ? $activeClass : 'hover:bg-slate-700' }}">
+                Notifications
+                @if($adminUnreadCount > 0)
+                    <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                        {{ $adminUnreadCount }}
+                    </span>
+                @endif
+            </a>
+
+
+
+
             @php use App\Helpers\RoleHelper; @endphp
             <a href="{{ route('role.profile', RoleHelper::slug(auth()->user()->roles->first()->name)) }}"
                class="block px-4 py-2 rounded-lg transition
@@ -86,34 +102,6 @@
 
             <div class="text-sm font-medium">
                 {{ auth()->user()->name }}
-            </div>
-
-            <div class="relative ml-4 group">
-                <!-- Bell Icon -->
-                <button class="relative focus:outline-none">
-                    🔔
-                    @if(auth()->user()->unreadNotifications->count())
-                        <span id="notif-count" class="absolute top-0 right-0 bg-red-500 text-white rounded-full px-1 text-xs">
-                            {{ auth()->user()->unreadNotifications->count() }}
-                        </span>
-                    @endif
-                </button>
-
-                <!-- Dropdown -->
-                <div
-                    class="absolute mt-2 right-0 w-80 bg-white border rounded shadow-lg max-h-96 overflow-auto hidden group-hover:block z-50"
-                    id="notif-dropdown">
-                    @forelse(auth()->user()->unreadNotifications as $notification)
-                        <a href="#" 
-                           class="block px-4 py-2 hover:bg-gray-100 notif-item" 
-                           data-id="{{ $notification->id }}">
-                            {{ $notification->data['message'] }}
-                            <span class="text-xs text-gray-400 float-right">{{ $notification->created_at->diffForHumans() }}</span>
-                        </a>
-                    @empty
-                        <p class="px-4 py-2 text-gray-500">No new notifications</p>
-                    @endforelse
-                </div>
             </div>
 
         </header>

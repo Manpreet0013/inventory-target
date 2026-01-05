@@ -18,7 +18,13 @@ use App\Http\Controllers\Accountant\DashboardController as AccountantDashboard;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/notification/{id}', function ($id) {
+    $notification = auth()->user()->notifications()->findOrFail($id);
 
+    $notification->markAsRead();
+
+    return redirect($notification->data['url']);
+})->name('notification.redirect');
 /*
 |--------------------------------------------------------------------------
 | Authenticated Common Routes
@@ -120,6 +126,8 @@ Route::middleware(['auth', 'role:Admin'])
         Route::get('/sales/export',[AdminDashboard::class,'export'])
             ->name('admin.sales.export');
 
+        Route::get('/notifications', [AdminDashboard::class,'notification'])->name('admin.notifications');
+        Route::get('/notifications/read/{id}', [AdminDashboard::class,'markAsRead'])->name('admin.notifications.read');
     });
 
 /*
@@ -196,6 +204,17 @@ Route::middleware(['auth', 'role:Executive'])
 
         Route::post('/sale/store', [ExecutiveDashboard::class, 'storeSale'])
             ->name('executive.sale.store');
+
+        Route::get('/notifications', function () {
+            $user = auth()->user();
+
+            // mark all as read
+            $user->unreadNotifications->markAsRead();
+
+            return view('executive.notifications', [
+                'notifications' => $user->notifications()->latest()->get()
+            ]);
+        })->name('executive.notifications');
 
     });
 

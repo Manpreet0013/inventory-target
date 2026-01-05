@@ -20,12 +20,12 @@
         <button @click="tab='assignedByAdmin'" 
                 :class="tab==='assignedByAdmin' ? 'border-b-4 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600'"
                 class="px-6 py-2 transition-colors">
-            Assigned by Admin
+            Product Admin
         </button>
         <button @click="tab='assignedToExecutive'" 
                 :class="tab==='assignedToExecutive' ? 'border-b-4 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600'"
                 class="px-6 py-2 transition-colors">
-            Assigned to Executive
+            Product Executive
         </button>
     </div>
 
@@ -37,12 +37,20 @@
                 <div>
                     <h2 class="font-semibold text-lg">{{ $target->product?->name ?? '-' }} ({{ ucfirst($target->target_type) }})</h2>
                     <div class="text-gray-500 text-sm">
-                        Assigned by: {{ $target->creator?->name ?? 'Admin' }}
+                        Assigned by: {{ $target->creator?->role?->name === 'Admin' ? 'Product Admin' : $target->creator?->name ?? 'Admin' }}
+                    </div>
+                    <div class="flex gap-2 mt-2 text-xs">
+                        <span class="bg-gray-100 px-2 py-1 rounded">Type: {{ $target->product?->type ?? '-' }}</span>
+                        @if($target->product?->expiry_date && now()->greaterThan($target->product->expiry_date))
+                            <span class="bg-red-100 text-red-700 px-2 py-1 rounded">Expired: {{ $target->product->expiry_date->format('d M Y') }}</span>
+                        @elseif($target->product?->expiry_date)
+                            <span class="bg-gray-100 px-2 py-1 rounded">Expiry: {{ $target->product->expiry_date->format('d M Y') }}</span>
+                        @endif
                     </div>
                     <div class="flex gap-4 mt-2">
-                        <div class="bg-blue-100 p-2 rounded text-center">Total: {{ $target->target_value }}</div>
-                        <div class="bg-green-100 p-2 rounded text-center">Achieved: {{ $target->achievedValue() }}</div>
-                        <div class="bg-red-100 p-2 rounded text-center">Remaining: {{ $target->remainingValue() }}</div>
+                        <div class="bg-blue-100 p-2 rounded text-center">Total Target: {{ $target->target_value }}({{ ucfirst($target->target_type) }})</div>
+                        <div class="bg-green-100 p-2 rounded text-center">Achieved: {{ $target->achievedValue() }}({{ ucfirst($target->target_type) }})</div>
+                        <div class="bg-red-100 p-2 rounded text-center">Remaining: {{ $target->remainingValue() }}({{ ucfirst($target->target_type) }})</div>
                     </div>
                 </div>
                 <button @click="modalOpen = true; selectedTarget = {{ $target->id }}" 
@@ -60,12 +68,20 @@
                 <div>
                     <h2 class="font-semibold text-lg">{{ $target->product?->name ?? '-' }} ({{ ucfirst($target->target_type) }})</h2>
                     <div class="text-gray-500 text-sm">
-                        Assigned by: {{ $target->parent?->creator?->name ?? 'Admin' }}
+                        Assigned by: {{ $target->parent?->creator?->role?->name === 'Admin' ? 'Product Admin' : $target->parent?->creator?->name ?? 'Admin' }}
+                    </div>
+                    <div class="flex gap-2 mt-2 text-xs">
+                        <span class="bg-gray-100 px-2 py-1 rounded">Type: {{ $target->product?->type ?? '-' }}</span>
+                        @if($target->product?->expiry_date && now()->greaterThan($target->product->expiry_date))
+                            <span class="bg-red-100 text-red-700 px-2 py-1 rounded">Expired: {{ $target->product->expiry_date->format('d M Y') }}</span>
+                        @elseif($target->product?->expiry_date)
+                            <span class="bg-gray-100 px-2 py-1 rounded">Expiry: {{ $target->product->expiry_date->format('d M Y') }}</span>
+                        @endif
                     </div>
                     <div class="flex gap-4 mt-2">
-                        <div class="bg-blue-100 p-2 rounded text-center">Total: {{ $target->target_value }}</div>
-                        <div class="bg-green-100 p-2 rounded text-center">Achieved: {{ $target->achievedValue() }}</div>
-                        <div class="bg-red-100 p-2 rounded text-center">Remaining: {{ $target->remainingValue() }}</div>
+                        <div class="bg-blue-100 p-2 rounded text-center">Total Target: {{ $target->target_value }}({{ ucfirst($target->target_type) }})</div>
+                        <div class="bg-green-100 p-2 rounded text-center">Achieved: {{ $target->achievedValue() }}({{ ucfirst($target->target_type) }})</div>
+                        <div class="bg-red-100 p-2 rounded text-center">Remaining: {{ $target->remainingValue() }}({{ ucfirst($target->target_type) }})</div>
                     </div>
                 </div>
                 <button @click="modalOpen = true; selectedTarget = {{ $target->id }}" 
@@ -76,106 +92,198 @@
     </div>
 
     {{-- Modal for Sales --}}
-    <div x-show="modalOpen" 
+    <div x-show="modalOpen"
          x-transition.opacity
          class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
 
         <div x-show="modalOpen"
              x-transition.scale
-             class="bg-white rounded-xl shadow-xl w-11/12 md:w-3/4 max-h-[90vh] overflow-y-auto p-6 relative">
+             class="bg-white rounded-xl shadow-xl w-11/12 md:w-4/5 max-h-[90vh] overflow-y-auto p-6 relative">
 
-            {{-- Close button --}}
-            <button @click="modalOpen=false; selectedTarget=null" 
-                    class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-3xl font-bold">&times;</button>
+            {{-- Close --}}
+            <button @click="modalOpen=false; selectedTarget=null"
+                    class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-3xl font-bold">
+                &times;
+            </button>
 
-            <h2 class="text-2xl font-bold mb-4 text-center text-blue-600">Sales Details</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-blue-600">
+                Target & Sales Breakdown
+            </h2>
 
             @php
                 $allTargets = $targetsAssignedByAdmin->merge($targetsAssignedToExecutive);
             @endphp
 
             @foreach($allTargets as $target)
-            <div x-show="selectedTarget === {{ $target->id }}" class="space-y-4">
-                <div class="bg-gray-50 p-4 rounded shadow-sm">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="text-lg font-semibold">{{ $target->product?->name ?? '-' }} ({{ ucfirst($target->target_type) }})</div>
-                        <div class="text-sm text-gray-500">Assigned by: {{ $target->creator?->name ?? 'Admin' }}</div>
+            <div x-show="selectedTarget === {{ $target->id }}" class="space-y-6">
+
+                @php
+                    // ADMIN CALCULATIONS
+                    $adminAssignedToExecutives = $target->children->sum('target_value');
+
+                    $adminSales = $target->sales->sum(
+                        $target->target_type === 'quantity' ? 'quantity' : 'amount'
+                    );
+
+                    $adminRemaining = $target->target_value
+                                        - $adminAssignedToExecutives
+                                        - $adminSales;
+                @endphp
+
+                {{-- SUMMARY BOX --}}
+               <div class="flex flex-wrap justify-between items-center gap-6">
+
+                    <div class="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-lg">
+                        <span class="font-medium text-blue-800">Total Target:</span>
+                        <span class="font-bold text-lg text-blue-900">
+                            {{ $target->target_value }}
+                        </span>
                     </div>
 
-                    <div class="flex gap-4 mb-4">
-                        <div class="bg-blue-100 p-2 rounded text-center w-1/3">
-                            <div class="text-xl font-bold text-blue-600">{{ $target->target_value }}</div>
-                            <div class="text-gray-700 text-sm">Total</div>
-                        </div>
-                        <div class="bg-green-100 p-2 rounded text-center w-1/3">
-                            <div class="text-xl font-bold text-green-600">{{ $target->achievedValue() }}</div>
-                            <div class="text-gray-700 text-sm">Achieved</div>
-                        </div>
-                        <div class="bg-red-100 p-2 rounded text-center w-1/3">
-                            <div class="text-xl font-bold text-red-600">{{ $target->remainingValue() }}</div>
-                            <div class="text-gray-700 text-sm">Remaining</div>
-                        </div>
+                    <div class="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-lg">
+                        <span class="font-medium text-green-800">Achieved:</span>
+                        <span class="font-bold text-lg text-green-900">
+                            {{ $target->achievedValue() }}
+                        </span>
                     </div>
 
-                    {{-- Sales Table --}}
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm border rounded-lg">
-                            <thead class="bg-blue-100 sticky top-0">
-                                <tr>
-                                    <th class="px-3 py-2">Executive</th>
-                                    <th class="px-3 py-2">Target</th>
-                                    <th class="px-3 py-2">Achieved</th>
-                                    <th class="px-3 py-2">Remaining</th>
-                                    <th class="px-3 py-2">Sale Qty / Amount</th>
-                                    <th class="px-3 py-2">Sale Date</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                {{-- User's own sales --}}
-                                <tr class="bg-white">
-                                    <td class="px-3 py-2">{{ $user->name }}</td>
-                                    <td class="px-3 py-2">{{ $target->target_value - $target->children->sum('target_value') }}</td>
-                                    <td class="px-3 py-2">{{ $target->sales->sum('quantity') ?? $target->sales->sum('amount') }}</td>
-                                    <td class="px-3 py-2">{{ ($target->target_value - $target->children->sum('target_value')) - ($target->sales->sum('quantity') ?? $target->sales->sum('amount')) }}</td>
-                                    <td class="px-3 py-2">
-                                        @foreach($target->sales as $sale)
-                                            <span class="block">{{ $sale->quantity ?? $sale->amount }} - {{ $sale->executive?->name ?? $user->name }}</span>
-                                        @endforeach
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        @foreach($target->sales as $sale)
-                                            <span class="block">{{ $sale->created_at->format('d-m-Y') }}</span>
-                                        @endforeach
-                                    </td>
-                                </tr>
-
-                                {{-- Child targets --}}
-                                @foreach($target->children as $child)
-                                <tr class="bg-gray-50">
-                                    <td class="px-3 py-2">{{ $child->executive?->name ?? '-' }}</td>
-                                    <td class="px-3 py-2">{{ $child->target_value }}</td>
-                                    <td class="px-3 py-2">{{ $child->sales->sum('quantity') ?? $child->sales->sum('amount') }}</td>
-                                    <td class="px-3 py-2">{{ $child->target_value - ($child->sales->sum('quantity') ?? $child->sales->sum('amount')) }}</td>
-                                    <td class="px-3 py-2">
-                                        @foreach($child->sales as $sale)
-                                            <span class="block">{{ $sale->quantity ?? $sale->amount }} - {{ $sale->executive?->name ?? '-' }}</span>
-                                        @endforeach
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        @foreach($child->sales as $sale)
-                                            <span class="block">{{ $sale->created_at->format('d-m-Y') }}</span>
-                                        @endforeach
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div class="flex items-center gap-2 bg-red-100 px-4 py-2 rounded-lg">
+                        <span class="font-medium text-red-800">Product Admin Remaining:</span>
+                        <span class="font-bold text-lg text-red-900">
+                            {{ $adminRemaining }}
+                        </span>
                     </div>
 
                 </div>
+
+                {{-- SALES TABLE --}}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border rounded-lg">
+                        <thead class="bg-blue-100">
+                            <tr>
+                                <th class="px-3 py-2">User</th>
+                                <th class="px-3 py-2">Assigned Target</th>
+                                <th class="px-3 py-2">Achieved</th>
+                                <th class="px-3 py-2">Remaining</th>
+                                <th class="px-3 py-2">Target Status</th>
+                                <th class="px-3 py-2">All Sales</th>
+                                <th class="px-3 py-2">Sale Dates</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y">
+
+                            {{-- PRODUCT ADMIN ROW --}}
+                            <tr class="bg-white font-semibold">
+                                <td class="px-3 py-2">
+                                    {{ $user->name }}
+                                    <span class="text-xs text-blue-600">(Product Admin)</span>
+                                </td>
+
+                                <td class="px-3 py-2">
+                                    {{ $target->target_value - $adminAssignedToExecutives }}
+                                </td>
+
+                                <td class="px-3 py-2">
+                                    {{ $adminSales }}
+                                </td>
+
+                                <td class="px-3 py-2">
+                                    {{ $adminRemaining }}
+                                </td>
+
+                                @php
+                                    $adminStatus = $target->status ?? 'pending';
+                                    $adminStatusClass = match($adminStatus) {
+                                        'accepted' => 'bg-green-100 text-green-700',
+                                        'rejected' => 'bg-red-100 text-red-700',
+                                        default => 'bg-yellow-100 text-yellow-700'
+                                    };
+                                @endphp
+
+                                <td class="px-3 py-2">
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $adminStatusClass }}">
+                                        {{ ucfirst($adminStatus) }}
+                                    </span>
+                                </td>
+
+
+                                <td class="px-3 py-2">
+                                    @foreach($target->sales as $sale)
+                                        <div>
+                                            {{ $sale->boxes_sold ?? $sale->amount }}
+                                            ({{ ucfirst($sale->status ?? 'pending') }})
+                                        </div>
+                                    @endforeach
+                                </td>
+
+                                <td class="px-3 py-2">
+                                    @foreach($target->sales as $sale)
+                                        <div>{{ $sale->created_at->format('d-m-Y') }}</div>
+                                    @endforeach
+                                </td>
+                            </tr>
+
+                            @foreach($target->children as $child)
+
+                                @php
+                                    $childAchieved = $child->sales->sum(
+                                        $child->target_type === 'box' ? 'boxes_sold' : 'amount'
+                                    );
+
+                                    $childRemaining = max($child->target_value - $childAchieved, 0);
+
+                                    $childStatus = $child->status ?? 'pending';
+                                    $childStatusClass = match($childStatus) {
+                                        'accepted' => 'bg-green-100 text-green-700',
+                                        'rejected' => 'bg-red-100 text-red-700',
+                                        default => 'bg-yellow-100 text-yellow-700'
+                                    };
+                                @endphp
+
+                                <tr class="bg-gray-50">
+                                    <td class="px-3 py-2">
+                                        {{ $child->executive?->name ?? '-' }}
+                                    </td>
+
+                                    <td class="px-3 py-2">{{ $child->target_value }}</td>
+
+                                    <td class="px-3 py-2">{{ $childAchieved }}</td>
+
+                                    <td class="px-3 py-2">{{ $childRemaining }}</td>
+
+                                    {{-- TARGET STATUS --}}
+                                    <td class="px-3 py-2">
+                                        <span class="px-2 py-1 rounded text-xs font-semibold {{ $childStatusClass }}">
+                                            {{ ucfirst($childStatus) }}
+                                        </span>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        @foreach($child->sales as $sale)
+                                            <div>
+                                                {{ $child->target_type === 'box' ? $sale->boxes_sold : $sale->amount }}
+                                                <span class="text-xs text-gray-500">
+                                                    ({{ ucfirst($sale->status ?? 'pending') }})
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        @foreach($child->sales as $sale)
+                                            <div>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d-m-Y') }}</div>
+                                        @endforeach
+                                    </td>
+                                </tr>
+                            @endforeach
+
+
+                        </tbody>
+                    </table>
+                </div>
             </div>
             @endforeach
-
         </div>
     </div>
 

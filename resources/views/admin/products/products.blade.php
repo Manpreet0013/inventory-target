@@ -48,7 +48,7 @@
                     <td class="px-4 py-3">
                         @if($product->image)
                             <img src="{{ asset('storage/'.$product->image) }}"
-                                 class="w-12 h-12 rounded object-cover">
+                                 class="w-12 h-12 rounded object-cover" width="100px">
                         @else
                             <span class="text-gray-400 italic">No Image</span>
                         @endif

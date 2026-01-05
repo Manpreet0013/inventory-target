@@ -1,11 +1,11 @@
 @extends('layouts.executive')
 
-@section('title','Split Target')
+@section('title','Team Management')
 
 @section('content')
 
 <h2 class="text-2xl font-bold mb-4">
-    Split Target – {{ $target->product->name }}
+    Team Management – {{ $target->product->name }}
 </h2>
 
 <div class="max-w-md bg-white border rounded p-4">
@@ -34,7 +34,7 @@
 
         {{-- Split Value --}}
         <label class="block font-medium mb-1">
-            Split {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
+            Team {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
         </label>
         <input type="number"
                name="value"
@@ -47,7 +47,7 @@
         <button type="submit"
                 id="splitBtn"
                 class="bg-purple-600 text-white px-4 py-2 rounded">
-            Split Target
+            Add Target
         </button>
 
         <a href="{{ url()->previous() }}"
@@ -59,6 +59,65 @@
         <p id="successBox" class="text-green-600 mt-2 hidden"></p>
     </form>
 </div>
+{{-- ================= TARGET SALES LIST ================= --}}
+@if($target->sales->count())
+
+<div class="max-w-3xl bg-white border rounded p-4 mt-6">
+
+    <h3 class="text-lg font-semibold mb-3 text-gray-800">
+        Sales for this Target
+    </h3>
+
+    <table class="w-full text-sm border-collapse">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="border px-2 py-1">#</th>
+                <th class="border px-2 py-1">
+                    {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
+                </th>
+                <th class="border px-2 py-1">Date</th>
+                <th class="border px-2 py-1">Added By</th>
+                <th class="border px-2 py-1">Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach($target->sales as $index => $sale)
+                <tr class="text-center hover:bg-gray-50">
+                    <td class="border px-2 py-1">{{ $index + 1 }}</td>
+
+                    <td class="border px-2 py-1 font-semibold text-green-600">
+                        {{ $sale->boxes_sold ?? $sale->amount }}
+                    </td>
+
+                    <td class="border px-2 py-1">
+                        {{ $sale->sale_date ?? $sale->created_at->format('d M Y') }}
+                    </td>
+
+                    <td class="border px-2 py-1">
+                        {{ $sale->user->name ?? 'Executive' }}
+                    </td>
+
+                    <td class="border px-2 py-1">
+                        <span class="px-2 py-1 rounded text-xs
+                            {{ $sale->status === 'approved'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-yellow-100 text-yellow-700' }}">
+                            {{ ucfirst($sale->status ?? 'pending') }}
+                        </span>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+</div>
+
+@else
+<div class="max-w-md mt-6 text-gray-500 text-sm">
+    No sales added for this target yet.
+</div>
+@endif
 
 {{-- AJAX --}}
 <script>

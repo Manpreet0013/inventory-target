@@ -18,6 +18,66 @@
             {{ ucfirst($target->status) }}
         </span>
     </div>
+    {{-- EXTRA PRODUCT & TARGET INFO --}}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs text-gray-600 mb-4">
+
+        {{-- Product Type --}}
+        <div>
+            <p class="text-gray-400">Product Type</p>
+            <p class="font-medium capitalize">
+                {{ $target->product->type ?? 'N/A' }}
+            </p>
+        </div>
+
+        {{-- Product Expiry --}}
+        <div>
+            <p class="text-gray-400">Product Expiry</p>
+            <p class="font-medium">
+                {{ $target->product->expiry_date
+                    ? \Carbon\Carbon::parse($target->product->expiry_date)->format('d M Y')
+                    : 'No Expiry' }}
+            </p>
+        </div>
+
+        {{-- Target Type --}}
+        <div>
+            <p class="text-gray-400">Target Type</p>
+            <p class="font-medium uppercase">
+                {{ $target->target_type === 'box' ? 'Box' : 'Amount' }}
+            </p>
+        </div>
+
+        {{-- Assigned By --}}
+        <div>
+            <p class="text-gray-400">Assigned By</p>
+            <p class="font-medium">
+                {{ $target->creator?->name ?? 'Admin' }}
+            </p>
+        </div>
+
+        {{-- Assigned Date --}}
+        <div>
+            <p class="text-gray-400">Assigned On</p>
+            <p class="font-medium">
+                {{ $target->created_at->format('d M Y') }}
+            </p>
+        </div>
+
+        {{-- Product Expiry Status --}}
+        @if($target->product->expiry_date)
+            @php
+                $daysLeft = now()->diffInDays($target->product->expiry_date, false);
+            @endphp
+            <div>
+                <p class="text-gray-400">Expiry Status</p>
+                <p class="font-medium
+                    {{ $daysLeft < 0 ? 'text-red-600' : ($daysLeft <= 7 ? 'text-yellow-600' : 'text-green-600') }}">
+                    {{ $daysLeft < 0 ? 'Expired' : ($daysLeft <= 7 ? 'Expiring Soon' : 'Active') }}
+                </p>
+            </div>
+        @endif
+
+    </div>
 
     {{-- TARGET STATS --}}
     @php
@@ -104,7 +164,7 @@
                 @if($target->parent_id === null)
                     <a href="{{ route('executive.target.split.view', $target->id) }}"
                        class="px-3 py-2 text-sm rounded bg-purple-600 text-white hover:bg-purple-700">
-                        Split
+                        Team
                     </a>
                 @endif
 

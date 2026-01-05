@@ -134,6 +134,27 @@ class Target extends Model
 
         return $sales;
     }
+    public function productExpired()
+    {
+        // Check if product has expiry date
+        if ($this->product && $this->product->expiry_date) {
+            $expiry = $this->product->expiry_date;
 
+            // Compare with today
+            return now()->gt($expiry); // true if expired, false if not
+        }
 
+        return false; // no expiry date set
+    }
+
+    public function productExpiryDate()
+    {
+        return $this->product?->expiry_date ? $this->product->expiry_date->format('d-m-Y') : null;
+    }
+
+    public function productType()
+    {
+        return $this->product?->type ?? '-'; // assuming your Product model has a 'type' field
+    }
+    
 }   

@@ -7,10 +7,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Target;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\ExpiryProductNotification;
-use App\Notifications\TargetCreatedNotification;
-
+use App\Notifications\InventoryNotification;
 
 class DashboardController extends Controller
 {
@@ -39,10 +36,6 @@ class DashboardController extends Controller
                 'message' => 'Admin already notified'
             ]);
         }
-
-        $admins = User::role('Admin')->get();
-
-        Notification::send($admins, new ExpiryProductNotification($product));
 
         // Optional column (recommended)
         $product->update(['notified_at' => now()]);
@@ -90,9 +83,14 @@ class DashboardController extends Controller
             'created_by'   => auth()->id(),
         ]);
 
-        // Notify Admin
-        $admins = \App\Models\User::role('Admin')->get();
-        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\TargetCreatedNotification($target));
+        $admins = User::role('Admin')->get();
+
+        foreach ($admins as $admin) {
+            $admin->notify(new InventoryNotification(
+                auth()->user()->name . ' added a new target for executive '
+            ));
+        }
+
 
         return response()->json([
             'success' => true,
