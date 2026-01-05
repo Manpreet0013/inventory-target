@@ -71,7 +71,7 @@
                 <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
                     Assign Target
                 </button>
-                <a href="{{ route('admin.list') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition">
+                <a href="{{ url()->previous() }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition">
                     Back
                 </a>
             </div>

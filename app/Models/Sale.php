@@ -13,7 +13,9 @@ class Sale extends Model
         'party_name',
         'sale_date',
         'status',
-        'executive_id'  
+        'accountant_status',
+        'executive_id',
+        'invoice_number'  
     ];
 
     public function target()

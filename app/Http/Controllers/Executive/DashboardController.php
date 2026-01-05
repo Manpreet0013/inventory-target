@@ -20,13 +20,14 @@ class DashboardController extends Controller
         $executiveId = auth()->id();
 
         $targets = Target::with(['product','children','sales'])
-            ->whereNull('parent_id')
-            ->where(function ($q) use ($executiveId) {
-                $q->where('executive_id', $executiveId)
-                  ->orWhere('created_by', $executiveId);
-            })
-            ->latest()
-            ->paginate(10);
+                    ->whereNull('parent_id')
+                    ->where('status', '!=', 'rejected') // 🔥 ADD THIS
+                    ->where(function ($q) use ($executiveId) {
+                        $q->where('executive_id', $executiveId)
+                          ->orWhere('created_by', $executiveId);
+                    })
+                    ->latest()
+                    ->paginate(10);
 
         return view('executive.targets.managed', compact('targets'));
     }
@@ -43,6 +44,37 @@ class DashboardController extends Controller
 
         return view('executive.targets.assigned', compact('assignedTargets'));
     }
+    public function partialAccept(Request $request, Target $target)
+    {
+        abort_if($target->executive_id !== auth()->id(), 403);
+        abort_if($target->status !== 'pending', 422, 'Target already processed');
+
+        $request->validate([
+            'accepted_value' => 'required|integer|min:1|max:' . $target->target_value
+        ]);
+
+        // Reject original target
+        $target->update(['status' => 'rejected']);
+
+        // Create new accepted target
+        Target::create([
+            'product_id'   => $target->product_id,
+            'executive_id' => $target->executive_id,
+            'target_type'  => $target->target_type,
+            'target_value' => $request->accepted_value,
+            'start_date'   => $target->start_date,
+            'end_date'     => $target->end_date,
+            'status'       => 'accepted',
+            'parent_id'    => $target->id,
+            'created_by'   => $target->created_by
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partial target accepted successfully'
+        ]);
+    }
+
     // View sales for a target
     public function sales(Target $target)
     {
@@ -61,7 +93,7 @@ class DashboardController extends Controller
     public function splitView(Target $target)
     {
         $executives = User::role('Executive')
-            ->where('company_id', auth()->user()->company_id)
+            ->where('id', '!=',auth()->id())
             ->get();
 
         return view('executive.target-split', compact('target', 'executives'));
@@ -115,6 +147,7 @@ class DashboardController extends Controller
             'amount'=>'nullable|numeric|min:1',
             'party_name'=>'required|string|max:255',
             'sale_date'=>'required|date',
+            'invoice_number' => 'nullable|string|max:50|unique:sales,invoice_number',
         ]);
 
         $target = Target::with('sales')
@@ -137,6 +170,7 @@ class DashboardController extends Controller
             'sale_date'=>$request->sale_date,
             'status'=>'pending',
             'executive_id'=>auth()->id(),
+            'invoice_number' => $request->invoice_number
         ]);
 
         // Notify admins
@@ -214,4 +248,26 @@ class DashboardController extends Controller
 
         return view('executive.report', compact('targets','from','to'));
     }
+    public function acceptPartial(Request $request, Target $target)
+    {
+        abort_if($target->executive_id !== auth()->id(), 403);
+        abort_if($target->status !== 'pending', 422);
+
+        $request->validate([
+            'value' => 'required|integer|min:1'
+        ]);
+
+        abort_if($request->value > $target->target_value, 422);
+
+        $target->update([
+            'target_value' => $request->value,
+            'status' => 'accepted'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partial target accepted successfully'
+        ]);
+    }
+    
 }

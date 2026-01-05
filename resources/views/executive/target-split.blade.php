@@ -100,8 +100,9 @@ document.getElementById('splitForm').addEventListener('submit', function(e) {
             successBox.classList.remove('hidden');
 
             setTimeout(() => {
-                window.location.href = "{{ route('executive.dashboard') }}";
+                window.location.href = "{{ url()->previous() }}";
             }, 1500);
+
         }
     })
     .catch(() => {

@@ -49,6 +49,12 @@
                 Targets Management
             </a>
 
+            <a href="/admin/sales"
+               class="block px-4 py-2 rounded-lg transition
+               {{ request()->is('admin/sales*') || request()->is('admin/sales*') ? $activeClass : 'hover:bg-slate-700' }}">
+                Total Sales
+            </a>
+
             @php use App\Helpers\RoleHelper; @endphp
             <a href="{{ route('role.profile', RoleHelper::slug(auth()->user()->roles->first()->name)) }}"
                class="block px-4 py-2 rounded-lg transition

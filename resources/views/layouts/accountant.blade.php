@@ -19,20 +19,15 @@
         @endphp
         <nav class="p-4 space-y-2 text-sm">
 
-            <a href="{{ route('inventory.dashboard') }}"
-               class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('inventory/dashboard') ? $activeClass : 'hover:bg-slate-700' }}">
+            <a href="{{ route('accountant.dashboard') }}"
+               class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('accountant/dashboard') ? $activeClass : 'hover:bg-slate-700' }}">
                Dashboard
-            </a>
-
-            <a href="{{ route('inventory.report') }}"
-               class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('inventory/reports') ? $activeClass : 'hover:bg-slate-700' }}">
-               Reports
             </a>
 
             @php use App\Helpers\RoleHelper; @endphp
             <a href="{{ route('role.profile', RoleHelper::slug(auth()->user()->roles->first()->name)) }}"
                class="block px-4 py-2 rounded-lg transition
-               {{ request()->is('inventory/profile') || request()->is('inventory/profile') ? $activeClass : 'hover:bg-slate-700' }}">
+               {{ request()->is('accountant/profile') || request()->is('accountant/profile') ? $activeClass : 'hover:bg-slate-700' }}">
                 Profile
             </a>
 

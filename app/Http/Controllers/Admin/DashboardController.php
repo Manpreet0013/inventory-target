@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Target;
 use App\Models\User;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -70,8 +71,6 @@ class DashboardController extends Controller
             'targetsByExecutive'
         ));
     }
-
-
     public function products()
     {
         return view('admin.products.index', [
@@ -194,7 +193,7 @@ class DashboardController extends Controller
     {
         $product = Product::with([
                     'targets' => function ($query) {
-                        $query->where('created_by', auth()->id()); //target of one layer
+                        // $query->where('created_by', auth()->id()); //target of one layer
                     },
                     'targets.executive',
                     'targets.sales'
@@ -204,7 +203,7 @@ class DashboardController extends Controller
 
     public function targets_listing()
     {
-        $targets = Target::with(['product', 'executive'])->where(['created_by'=>auth()->id()])->latest()->get();
+        $targets = Target::with(['product', 'executive'])->whereNull('parent_id')->latest()->get();
         return view('admin.targets.targets', compact('targets'));
     }
 
@@ -220,7 +219,71 @@ class DashboardController extends Controller
 
         return view('admin.sales.details', compact('product', 'target', 'childTargets'));
     }
+    public function sales(Request $request)
+    {
+        $status = $request->status;
 
+        $stats = [
+            'total'    => Sale::count(),
+            'approved' => Sale::where('status','approved')->sum('amount'),
+            'pending'  => Sale::where('status','pending')->count(),
+            'rejected' => Sale::where('status','rejected')->count(),
+        ];
 
+        $sales = Sale::with('executive')
+            ->when($status, fn($q) => $q->where('status',$status))
+            ->latest()
+            ->paginate(15);
 
+        return view('admin.sales.index', compact('sales','status','stats'));
+    }
+    public function bulkApprove(Request $request)
+    {
+        Sale::whereIn('id', $request->sales ?? [])
+            ->update(['status' => 'approved']);
+
+        return back()->with('success','Selected sales approved');
+    }
+    public function export()
+    {
+        $sales = Sale::all();
+
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=sales.csv",
+        ];
+
+        $callback = function () use ($sales) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Invoice','Party','Amount','Status','Date']);
+
+            foreach ($sales as $sale) {
+                fputcsv($file, [
+                    $sale->invoice_number,
+                    $sale->party_name,
+                    $sale->amount,
+                    $sale->status,
+                    $sale->sale_date
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+    public function updateStatus(Request $request, Sale $sale)
+    {
+        $request->validate([
+            'status' => 'required|in:approved,rejected'
+        ]);
+
+        $sale->update([
+            'status' => $request->status
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status'  => $sale->status
+        ]);
+    }
 }

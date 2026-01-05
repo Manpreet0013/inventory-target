@@ -3,63 +3,110 @@
 @section('title','Products Listing')
 
 @section('content')
+<div class="max-w-7xl mx-auto px-4 py-6">
 
-<h1 class="text-2xl font-bold mb-4">Products</h1>
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">
+            📦 Products
+        </h1>
 
-<a href="{{ route('admin.add-product') }}" 
-   class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4 inline-block">
-    Create New Product
-</a>
+        <a href="{{ route('admin.add-product') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow">
+            + Create New Product
+        </a>
+    </div>
 
-<table class="border w-full text-left">
-    <thead>
-        <tr class="bg-gray-200">
-            <th class="border px-2 py-1">#</th>
-            <th class="border px-2 py-1">Product Name</th>
-            <th class="border px-2 py-1">Image</th>
-            <th class="border px-2 py-1">Composition</th>
-            <th class="border px-2 py-1">Type</th>
-            <th class="border px-2 py-1">Expiry</th>
-            <th class="border px-2 py-1">Target</th>
-            <th class="border px-2 py-1">Targets Status</th>
-            <th class="border px-2 py-1">Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($products as $index => $product)
-        <tr>
-            <td class="border px-2 py-1">{{ $index + 1 }}</td>
-            <td class="border px-2 py-1">{{ $product->name }}</td>
-            <td class="border px-2 py-1">
-                @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image" class="w-16 h-16 object-cover">
-                @else
-                    <span class="text-gray-500">No Image</span>
-                @endif
-            </td>
-            <td class="border px-2 py-1">{{ $product->composition ?? '-' }}</td>
-            <td class="border px-2 py-1">{{ $product->type }}</td>
-            <td class="border px-2 py-1">{{ $product->expiry_date ?? '-' }}</td>
-            <td class="border px-2 py-1">{{ $product->targets()->count() }}</td>
-            <td class="border px-2 py-1">
-                @if($product->targets->count() > 0)
-                    <span class="px-2 py-1 rounded text-white 
-                        {{ $product->isTargetCompleted() ? 'bg-green-500' : 'bg-red-500' }}">
-                        {{ $product->isTargetCompleted() ? 'Complete' : 'Incomplete' }}
-                    </span>
-                @else
-                    <span class="text-gray-500">No Targets</span>
-                @endif
-            </td>
-            <td class="border px-2 py-1">
-                <a href="{{ route('admin.products.details', $product->id) }}" 
-                   class="bg-blue-600 text-white px-2 py-1 rounded">View Targets</a>
-                <a href="{{ route('admin.targets') }}" 
-                   class="bg-green-600 text-white px-2 py-1 rounded">Add Targets</a>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+    <!-- TABLE CARD -->
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+        <table class="min-w-full text-sm text-left">
+            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-3">#</th>
+                    <th class="px-4 py-3">Product</th>
+                    <th class="px-4 py-3">Image</th>
+                    <th class="px-4 py-3">Composition</th>
+                    <th class="px-4 py-3">Type</th>
+                    <th class="px-4 py-3">Expiry</th>
+                    <th class="px-4 py-3 text-center">Targets</th>
+                    <th class="px-4 py-3 text-center">Status</th>
+                    <th class="px-4 py-3 text-center">Actions</th>
+                </tr>
+            </thead>
 
+            <tbody class="divide-y">
+                @forelse($products as $index => $product)
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-3 font-medium">
+                        {{ $index + 1 }}
+                    </td>
+
+                    <td class="px-4 py-3 font-semibold text-gray-800">
+                        {{ $product->name }}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        @if($product->image)
+                            <img src="{{ asset('storage/'.$product->image) }}"
+                                 class="w-12 h-12 rounded object-cover">
+                        @else
+                            <span class="text-gray-400 italic">No Image</span>
+                        @endif
+                    </td>
+
+                    <td class="px-4 py-3">
+                        {{ $product->composition ?? '-' }}
+                    </td>
+
+                    <td class="px-4 py-3 capitalize">
+                        {{ $product->type }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ $product->expiry_date ?? '-' }}
+                    </td>
+
+                    <td class="px-4 py-3 text-center font-semibold">
+                        {{ $product->targets()->count() }}
+                    </td>
+
+                    <td class="px-4 py-3 text-center">
+                        @if($product->targets->count())
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                {{ $product->isTargetCompleted()
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700' }}">
+                                {{ $product->isTargetCompleted() ? 'Completed' : 'Incomplete' }}
+                            </span>
+                        @else
+                            <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs">
+                                No Targets
+                            </span>
+                        @endif
+                    </td>
+
+                    <td class="px-4 py-3 text-center space-x-2">
+                        <a href="{{ route('admin.products.details',$product->id) }}"
+                           class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs">
+                            View
+                        </a>
+
+                        <a href="{{ route('admin.targets') }}"
+                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs">
+                            Add
+                        </a>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="9" class="text-center py-6 text-gray-500">
+                        No products found
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+</div>
 @endsection

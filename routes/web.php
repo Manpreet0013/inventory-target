@@ -107,6 +107,19 @@ Route::middleware(['auth', 'role:Admin'])
             'users/{user}/report',
             [\App\Http\Controllers\Admin\UserReportController::class, 'show']
         )->name('admin.users.report');
+
+        Route::get('/sales', [AdminDashboard::class, 'sales'])
+            ->name('admin.sales.index');
+
+        Route::post('/sales/{sale}/status', [AdminDashboard::class, 'updateStatus'])
+            ->name('admin.sales.updateStatus');
+
+        Route::post('/sales/bulk-approve',[AdminDashboard::class,'bulkApprove'])
+            ->name('admin.sales.bulkApprove');
+
+        Route::get('/sales/export',[AdminDashboard::class,'export'])
+            ->name('admin.sales.export');
+
     });
 
 /*
@@ -122,7 +135,16 @@ Route::middleware(['auth', 'role:Inventory Manager'])
             ->name('inventory.dashboard');
 
         Route::post('/notify/{id}', [InventoryDashboard::class, 'notifyAdmin']);
-    });
+
+        Route::post('/target/store', [InventoryDashboard::class, 'storeTarget'])->name('inventory.target.store');
+
+        Route::get('/target-listing', [InventoryDashboard::class, 'targets_listing'])->name('target.list');
+
+        Route::get('/product-listing/{id}', [InventoryDashboard::class, 'productDetails'])
+            ->name('inventory.products');
+
+        Route::get('/reports', [InventoryDashboard::class, 'reports'])->name('inventory.report');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -174,6 +196,7 @@ Route::middleware(['auth', 'role:Executive'])
 
         Route::post('/sale/store', [ExecutiveDashboard::class, 'storeSale'])
             ->name('executive.sale.store');
+
     });
 
 /*
@@ -185,10 +208,15 @@ Route::middleware(['auth', 'role:Accountant'])
     ->prefix('accountant')
     ->group(function () {
 
-        Route::get('/dashboard', [AccountantDashboard::class, 'index']);
+        Route::get('/dashboard', [AccountantDashboard::class, 'index'])
+            ->name('accountant.dashboard');
 
-        Route::post('/sale/{sale}/approve', [AccountantDashboard::class, 'approve']);
-        Route::post('/sale/{sale}/reject', [AccountantDashboard::class, 'reject']);
+        Route::post('/sale/{sale}/approve', [AccountantDashboard::class, 'approve'])
+            ->name('accountant.sale.approve');
+
+        Route::post('/sale/{sale}/reject', [AccountantDashboard::class, 'reject'])
+            ->name('accountant.sale.reject');
     });
+
 
 require __DIR__.'/auth.php';

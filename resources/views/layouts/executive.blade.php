@@ -26,12 +26,12 @@
 
             <a href="{{ route('executive.targets.managed') }}"
                class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('executive/targets/managed') ? $activeClass : 'hover:bg-slate-700' }}">
-               📌 My Managed Targets
+               📌 Products By Admin
             </a>
 
             <a href="{{ route('executive.targets.assigned') }}"
                class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('executive/targets/assigned') ? $activeClass : 'hover:bg-slate-700' }}">
-               📌 Targets Assigned To Me
+               📌 Products By executive
             </a>
 
 
@@ -73,6 +73,11 @@
     </main>
 
 </div>
+{{-- Global Target Modal --}}
+@include('executive.components.partial-accept-modal')
+
+{{-- Global Target JS --}}
+@include('executive.components.target-actions-js')
 
 </body>
 </html>

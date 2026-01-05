@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('image')->nullable();
             $table->date('expiry_date')->nullable();
-            $table->text('composition');
+            $table->string('composition')->nullable();
             $table->enum('type', ['expiry', 'new']);
             $table->timestamps();
         });

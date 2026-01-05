@@ -23,6 +23,7 @@ class ProfileController extends Controller
             'admin' => 'layouts.admin',
             'inventory manager' => 'layouts.inventory',
             'executive' => 'layouts.executive',
+            'accountant' => 'layouts.accountant',
             default => 'layouts.app',
         };
 

@@ -9,8 +9,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Show only sales that are approved by admin but pending accountant approval
         $sales = Sale::with('target.product')
-            ->where('status','pending')
+            // ->where('status', 'approved')
+            // ->where('accountant_status', 'pending')
             ->get();
 
         return view('accountant.dashboard', compact('sales'));
@@ -18,13 +20,13 @@ class DashboardController extends Controller
 
     public function approve(Sale $sale)
     {
-        $sale->update(['status'=>'approved']);
-        return response()->json(['success'=>true]);
+        $sale->update(['accountant_status' => 'approved']);
+        return response()->json(['success' => true]);
     }
 
     public function reject(Sale $sale)
     {
-        $sale->update(['status'=>'rejected']);
-        return response()->json(['success'=>true]);
+        $sale->update(['accountant_status' => 'rejected']);
+        return response()->json(['success' => true]);
     }
 }

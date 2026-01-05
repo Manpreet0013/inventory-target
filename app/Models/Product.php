@@ -18,9 +18,9 @@ class Product extends Model
         'expiry_date',
     ];
 
-    // ✅ ADD THIS
     protected $casts = [
-        'expiry_date' => 'date',
+        'expiry_date' => 'datetime', // no format string here
+        'notified_at' => 'datetime', // for optional notification
     ];
 
     public function targets()

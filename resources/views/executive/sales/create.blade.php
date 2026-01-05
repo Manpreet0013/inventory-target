@@ -13,12 +13,77 @@
     <p><strong>Remaining:</strong> {{ $target->remainingValue() }}</p>
 </div>
 
+{{-- INVOICE PREVIEW --}}
+<div class="bg-white border rounded-xl p-5 mb-6 max-w-3xl">
+
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h2 class="text-xl font-bold">Sales Invoice</h2>
+            <p class="text-sm text-gray-500">Preview before saving</p>
+        </div>
+
+        <div class="text-right text-sm">
+            <p><strong>Invoice #</strong> <span id="invNo">—</span></p>
+            <p><strong>Date:</strong> <span id="invDate">{{ date('Y-m-d') }}</span></p>
+        </div>
+    </div>
+
+    <hr class="my-3">
+
+    <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+        <div>
+            <p><strong>Executive:</strong> {{ auth()->user()->name }}</p>
+            <p><strong>Product:</strong> {{ $target->product->name }}</p>
+            <p><strong>Target Type:</strong> {{ ucfirst($target->target_type) }}</p>
+        </div>
+
+        <div>
+            <p><strong>Remaining Target:</strong> {{ $target->remainingValue() }}</p>
+            <p><strong>Party Name:</strong> <span id="invParty">—</span></p>
+        </div>
+    </div>
+
+    <table class="w-full border text-sm">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="border px-3 py-2 text-left">Description</th>
+                <th class="border px-3 py-2 text-right">Qty / Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="border px-3 py-2">
+                    {{ $target->product->name }}
+                </td>
+                <td class="border px-3 py-2 text-right">
+                    <span id="invValue">0</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="flex justify-end mt-3 text-sm">
+        <p class="font-semibold">
+            Total: <span id="invTotal">0</span>
+        </p>
+    </div>
+</div>
+
+
 <div class="max-w-md bg-white p-4 border rounded">
 
 <form id="saleForm">
     @csrf
 
     <input type="hidden" name="target_id" value="{{ $target->id }}">
+
+    {{-- Invoice Number --}}
+    <label class="block mb-1 font-medium">Invoice Number</label>
+    <input type="text"
+           name="invoice_number"
+           class="border w-full px-2 py-1 mb-3 rounded"
+           placeholder="Enter invoice number">
+
 
     {{-- Party Name --}}
     <label class="block mb-1 font-medium">Party Name</label>
@@ -66,7 +131,7 @@
         Save Sale
     </button>
 
-    <a href="{{ route('executive.targets.assigned') }}" class="bg-gray-400 text-white px-4 py-2 rounded">
+    <a href="{{ url()->previous() }}" class="bg-gray-400 text-white px-4 py-2 rounded">
                     Back
                 </a>
 
@@ -122,7 +187,9 @@ document.getElementById('saleForm').addEventListener('submit', function(e) {
             successBox.classList.remove('hidden');
             form.reset();
 
-            setTimeout(() => { window.location.href = '/executive/dashboard'; }, 1500);
+             setTimeout(() => { 
+                window.location.href = `/executive/target/${formData.get('target_id')}/sales`; 
+            }, 1500);
         }
     })
     .catch(() => {
@@ -134,6 +201,29 @@ document.getElementById('saleForm').addEventListener('submit', function(e) {
     });
 });
 
+</script>
+<script>
+const partyInput = document.querySelector('[name="party_name"]');
+const qtyInput = document.querySelector('[name="boxes_sold"], [name="amount"]');
+const invoiceInput = document.querySelector('[name="invoice_number"]');
+
+invoiceInput.addEventListener('input', e => {
+    document.getElementById('invNo').textContent = e.target.value || '—';
+});
+
+if (partyInput) {
+    partyInput.addEventListener('input', e => {
+        document.getElementById('invParty').textContent = e.target.value || '—';
+    });
+}
+
+if (qtyInput) {
+    qtyInput.addEventListener('input', e => {
+        let val = e.target.value || 0;
+        document.getElementById('invValue').textContent = val;
+        document.getElementById('invTotal').textContent = val;
+    });
+}
 </script>
 
 @endsection
