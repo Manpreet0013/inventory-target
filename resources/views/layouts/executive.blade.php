@@ -26,12 +26,12 @@
 
             <a href="{{ route('executive.targets.managed') }}"
                class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('executive/targets/managed') ? $activeClass : 'hover:bg-slate-700' }}">
-               📌 Products By Admin
+               📌 Products Admin
             </a>
 
             <a href="{{ route('executive.targets.assigned') }}"
                class="block px-4 py-2 rounded hover:bg-slate-700 {{ request()->is('executive/targets/assigned') ? $activeClass : 'hover:bg-slate-700' }}">
-               📌 Products By executive
+               📌 Products executive
             </a>
 
             @php

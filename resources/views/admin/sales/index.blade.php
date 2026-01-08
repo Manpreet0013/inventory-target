@@ -117,8 +117,8 @@
                     <th class="p-3 text-left">Sale Value</th>
                     <th class="p-3 text-left">Date</th>
                     <th class="p-3 text-left">User</th>
-                    <th class="p-3 text-left">Admin Status</th>
-                    <th class="p-3 text-left">Accountant</th>
+                    <th class="p-3 text-left">Product Admin</th>
+                    <th class="p-3 text-left">Status</th>
                 </tr>
                 </thead>
 

@@ -195,36 +195,37 @@ class DashboardController extends Controller
         return view('admin.products.products', compact('products'));
     }
 
-    // Show details of a single product with targets and sales
+   // Show product details with targets and sales
     public function productDetails($id)
     {
         $product = Product::with([
-                    'targets' => function ($query) {
-                        // $query->where('created_by', auth()->id()); //target of one layer
-                    },
-                    'targets.executive',
-                    'targets.sales'
-                ])->findOrFail($id);
+            // Only parent targets
+            'targets' => fn($q) => $q->whereNull('parent_id'),
+            'targets.sales',      // parent sales
+            'targets.executive',  // parent executive
+            'targets.children' => fn($q) => $q->with('executive','sales') // child targets
+        ])->findOrFail($id);
+
         return view('admin.products.product_details', compact('product'));
+    }
+    public function saleListing(Product $product, Target $target)
+    {
+        $target->load([
+            'executive',          // parent executive
+            'sales',              // parent sales
+            'children.executive', // child executives
+            'children.sales'      // child sales
+        ]);
+
+        $childTargets = $target->children; // eager-loaded
+
+        return view('admin.products.product_details', compact('product','target','childTargets'));
     }
 
     public function targets_listing()
     {
         $targets = Target::with(['product', 'executive'])->whereNull('parent_id')->latest()->get();
         return view('admin.targets.targets', compact('targets'));
-    }
-
-    public function saleListing(Product $product, Target $target)
-    {
-        // Load main target sales
-        $target->load(['executive', 'sales']);
-
-        // Load child targets recursively (only children of this target)
-        $childTargets = Target::with(['executive', 'sales', 'children.executive', 'children.sales'])
-            ->where('parent_id', $target->id)
-            ->get();
-
-        return view('admin.sales.details', compact('product', 'target', 'childTargets'));
     }
     public function sales(Request $request)
     {
