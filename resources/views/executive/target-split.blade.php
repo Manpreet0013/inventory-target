@@ -8,22 +8,17 @@
     Team Management – {{ $target->product->name }}
 </h2>
 
-<div class="max-w-md bg-white border rounded p-4">
-
+{{-- Target Summary --}}
+<div class="max-w-md bg-white border rounded p-4 mb-6">
     <div class="mb-3 text-sm text-gray-700">
-        <p><strong>Target Type:</strong>
-            {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
-        </p>
+        <p><strong>Target Type:</strong> {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}</p>
         <p><strong>Total Target:</strong> {{ $target->target_value }}</p>
-        <p class="text-red-600 font-semibold">
-            Remaining: {{ $target->remainingValue() }}
-        </p>
+        <p class="text-red-600 font-semibold">Remaining: {{ $target->remainingValue() }}</p>
     </div>
 
+    {{-- Assign to Executive --}}
     <form id="splitForm">
         @csrf
-
-        {{-- Select Executive --}}
         <label class="block font-medium mb-1">Assign To Executive</label>
         <select name="executive_id" class="border w-full px-2 py-1 mb-3 rounded" required>
             <option value="">Select Executive</option>
@@ -32,7 +27,6 @@
             @endforeach
         </select>
 
-        {{-- Split Value --}}
         <label class="block font-medium mb-1">
             Team {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
         </label>
@@ -59,67 +53,69 @@
         <p id="successBox" class="text-green-600 mt-2 hidden"></p>
     </form>
 </div>
-{{-- ================= TARGET SALES LIST ================= --}}
-@if($target->sales->count())
 
-<div class="max-w-3xl bg-white border rounded p-4 mt-6">
+{{-- ================= TEAM LIST ================= --}}
+@if($target->children->count())
+<div class="max-w-4xl bg-white border rounded p-4">
 
     <h3 class="text-lg font-semibold mb-3 text-gray-800">
-        Sales for this Target
+        Team Members Assigned
     </h3>
 
     <table class="w-full text-sm border-collapse">
         <thead class="bg-gray-100">
             <tr>
-                <th class="border px-2 py-1">#</th>
-                <th class="border px-2 py-1">
-                    {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
-                </th>
-                <th class="border px-2 py-1">Date</th>
-                <th class="border px-2 py-1">Added By</th>
-                <th class="border px-2 py-1">Status</th>
+                <th class="border px-2 py-1 text-center">#</th>
+                <th class="border px-2 py-1">Executive</th>
+                <th class="border px-2 py-1 text-right">Assigned</th>
+                <th class="border px-2 py-1 text-right">Achieved</th>
+                <th class="border px-2 py-1 text-right">Remaining</th>
+                <th class="border px-2 py-1 text-center">Status</th>
             </tr>
         </thead>
 
         <tbody>
-            @foreach($target->sales as $index => $sale)
-                <tr class="text-center hover:bg-gray-50">
-                    <td class="border px-2 py-1">{{ $index + 1 }}</td>
+            @foreach($team as $index => $member)
+            <tr class="hover:bg-gray-50 text-center">
+                <td class="border px-2 py-1">{{ $loop->iteration }}</td>
 
-                    <td class="border px-2 py-1 font-semibold text-green-600">
-                        {{ $sale->boxes_sold ?? $sale->amount }}
-                    </td>
+                <td class="border px-2 py-1 text-left">
+                    {{ $member['executive']->name }}
+                </td>
 
-                    <td class="border px-2 py-1">
-                        {{ $sale->sale_date ?? $sale->created_at->format('d M Y') }}
-                    </td>
+                <td class="border px-2 py-1 text-right font-semibold">
+                    {{ $member['assigned'] }}
+                </td>
 
-                    <td class="border px-2 py-1">
-                        {{ $sale->user->name ?? 'Executive' }}
-                    </td>
+                <td class="border px-2 py-1 text-right font-semibold text-green-600">
+                    {{ $member['achieved'] }}
+                </td>
 
-                    <td class="border px-2 py-1">
-                        <span class="px-2 py-1 rounded text-xs
-                            {{ $sale->status === 'approved'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700' }}">
-                            {{ ucfirst($sale->status ?? 'pending') }}
-                        </span>
-                    </td>
-                </tr>
+                <td class="border px-2 py-1 text-right font-semibold text-red-600">
+                    {{ $member['remaining'] }}
+                </td>
+
+                <td class="border px-2 py-1">
+                    <span class="px-2 py-1 rounded text-xs
+                        {{ $member['status'] === 'accepted'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700' }}">
+                        {{ ucfirst($member['status']) }}
+                    </span>
+                </td>
+            </tr>
             @endforeach
+
         </tbody>
     </table>
-
 </div>
-
 @else
 <div class="max-w-md mt-6 text-gray-500 text-sm">
-    No sales added for this target yet.
+    No team members assigned yet.
 </div>
 @endif
 
-{{-- AJAX --}}
+{{-- AJAX for splitting target --}}
 <script>
 document.getElementById('splitForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -149,7 +145,7 @@ document.getElementById('splitForm').addEventListener('submit', function(e) {
     .then(res => res.json())
     .then(data => {
         btn.disabled = false;
-        btn.innerText = 'Split Target';
+        btn.innerText = 'Add Target';
 
         if (!data.success) {
             errorBox.textContent = data.message || 'Error occurred';
@@ -159,14 +155,13 @@ document.getElementById('splitForm').addEventListener('submit', function(e) {
             successBox.classList.remove('hidden');
 
             setTimeout(() => {
-                window.location.href = "{{ url()->previous() }}";
-            }, 1500);
-
+                window.location.reload();
+            }, 1000);
         }
     })
     .catch(() => {
         btn.disabled = false;
-        btn.innerText = 'Split Target';
+        btn.innerText = 'Add Target';
         errorBox.textContent = 'Something went wrong';
         errorBox.classList.remove('hidden');
     });

@@ -24,8 +24,8 @@ class DashboardController extends Controller
         $sales = Sale::with('target.product')
             ->where('status', 'approved')
             //->whereNull('accountant_status') // or ->where('accountant_status','pending')
-            ->latest()
-            ->get();
+            ->orderByDesc('created_at')   // latest on top
+            ->paginate(10);
 
         return view('accountant.dashboard', compact('sales'));
     }

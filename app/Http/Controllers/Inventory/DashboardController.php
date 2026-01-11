@@ -99,9 +99,15 @@ class DashboardController extends Controller
     }
     public function targets_listing()
     {
-        $targets = Target::with(['product', 'executive'])->whereNull('parent_id')->latest()->get();
+        // Load targets with product and executive, 10 per page
+        $targets = Target::with(['product', 'executive', 'sales'])
+                         ->whereNull('parent_id')
+                         ->latest()
+                         ->paginate(10); // change 10 to any number of rows per page
+
         return view('inventory.targets', compact('targets'));
     }
+
     // Show details of a single product with targets and sales
     public function productDetails($id)
     {

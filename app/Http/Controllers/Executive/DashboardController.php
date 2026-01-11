@@ -108,11 +108,35 @@ class DashboardController extends Controller
     // ================= SPLIT VIEW =================
     public function splitView(Target $target)
     {
+        if ($target->parent_id !== null) {
+            $target = Target::findOrFail($target->parent_id);
+        }
+
+        $target->load([
+            'children.executive',
+            'children.sales'
+        ]);
+
+        // 🔥 GROUP BY EXECUTIVE
+        $team = $target->children
+            ->groupBy('executive_id')
+            ->map(function ($rows) {
+                return [
+                    'executive' => $rows->first()->executive,
+                    'assigned'  => $rows->sum('target_value'),
+                    'achieved'  => $rows->sum(fn ($t) => $t->achievedValue()),
+                    'remaining' => $rows->sum(fn ($t) => $t->remainingValue()),
+                    'status'    => $rows->pluck('status')->contains('pending')
+                                        ? 'pending'
+                                        : 'accepted',
+                ];
+            });
+
         $executives = User::role('Executive')
-            ->where('id','!=',auth()->id())
+            ->where('id', '!=', auth()->id())
             ->get();
 
-        return view('executive.target-split', compact('target','executives'));
+        return view('executive.target-split', compact('target', 'executives', 'team'));
     }
 
     // ================= SHOW TARGET =================
@@ -232,40 +256,64 @@ class DashboardController extends Controller
     // ================= SPLIT TARGET =================
     public function split(Request $request, Target $target)
     {
-        abort_if($target->executive_id !== auth()->id(),403);
-        abort_if($target->parent_id !== null,403);
-        abort_if($target->status !== 'accepted',422);
+        abort_if($target->executive_id !== auth()->id(), 403);
+        abort_if($target->parent_id !== null, 403);
+        abort_if($target->status !== 'accepted', 422);
 
         $request->validate([
-            'executive_id'=>'required|exists:users,id',
-            'value'=>'required|integer|min:1'
+            'executive_id' => 'required|exists:users,id',
+            'value'        => 'required|integer|min:1'
         ]);
 
-        abort_if($request->value > $target->remainingValue(),422);
+        abort_if($request->value > $target->remainingValue(), 422);
 
         $newExec = User::findOrFail($request->executive_id);
 
-        Target::create([
-            'product_id'=>$target->product_id,
-            'executive_id'=>$newExec->id,
-            'target_type'=>$target->target_type,
-            'target_value'=>$request->value,
-            'start_date'=>$target->start_date,
-            'end_date'=>$target->end_date,
-            'status'=>'pending',
-            'parent_id'=>$target->id,
-            'created_by'=>auth()->id(),
-        ]);
+        /* =====================================================
+           CHECK EXISTING PENDING TARGET FOR SAME EXECUTIVE
+        ===================================================== */
+        $existingTarget = Target::where('parent_id', $target->id)
+            ->where('executive_id', $newExec->id)
+            ->where('status', 'pending')
+            ->first();
 
+        if ($existingTarget) {
+
+            // 🔁 MERGE VALUE INTO EXISTING TARGET
+            $existingTarget->increment('target_value', $request->value);
+
+        } else {
+
+            // ➕ CREATE NEW TARGET ENTRY
+            Target::create([
+                'product_id'   => $target->product_id,
+                'executive_id' => $newExec->id,
+                'target_type'  => $target->target_type,
+                'target_value' => $request->value,
+                'start_date'   => $target->start_date,
+                'end_date'     => $target->end_date,
+                'status'       => 'pending',
+                'parent_id'    => $target->id,
+                'created_by'   => auth()->id(),
+            ]);
+        }
+
+        /* =====================================================
+           NOTIFY ADMINS
+        ===================================================== */
         foreach ($this->admins as $admin) {
             $admin->notify(new InventoryNotification(
-                'Target assigned to '.$newExec->name,
-                route('admin.products.details',$target->product_id)
+                'Target assigned to ' . $newExec->name,
+                route('admin.products.details', $target->product_id)
             ));
         }
 
-        return response()->json(['success'=>true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Target split successfully'
+        ]);
     }
+
 
     // ================= EXECUTIVE REPORT =================
     public function report(Request $request)

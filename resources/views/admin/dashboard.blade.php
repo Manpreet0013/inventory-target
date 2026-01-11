@@ -29,35 +29,15 @@
 
     </div>
 
-
-    <!-- CHARTS -->
-    <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-
-        <div class="bg-white rounded-xl p-5 shadow">
-            <h3 class="font-semibold text-gray-700 mb-3">Target Status</h3>
-            <canvas id="statusChart"></canvas>
-        </div>
-
-        <div class="bg-white rounded-xl p-5 shadow">
-            <h3 class="font-semibold text-gray-700 mb-3">Targets by Product</h3>
-            <canvas id="productChart"></canvas>
-        </div>
-
-        <div class="bg-white rounded-xl p-5 shadow md:col-span-2">
-            <h3 class="font-semibold text-gray-700 mb-3">Targets by Executive</h3>
-            <canvas id="executiveChart"></canvas>
-        </div>
-    </div> -->
-
     <!-- LATEST TARGETS TABLE -->
     <h2 class="text-xl font-semibold text-gray-800 mb-4">
         🕒 Latest Main Targets
     </h2>
 
     <div class="bg-white rounded-xl shadow overflow-x-auto">
-        <h2 class="text-xl font-semibold mb-4">Target Progress</h2>
+        <h2 class="text-xl font-semibold mb-4"> Target Progress</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             @foreach($latestTargets as $target)
 
             @php
@@ -107,7 +87,7 @@
                 </div>
 
                 <!-- STATS -->
-                <div class="grid grid-cols-3 text-center text-xs gap-2">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                     <div>
                         <p class="text-gray-500">Target</p>
                         <p class="font-semibold">{{ $targetValue }}</p>
@@ -123,6 +103,7 @@
                         <p class="font-semibold text-red-500">{{ $remaining }}</p>
                     </div>
                 </div>
+
             </a>
 
             @endforeach

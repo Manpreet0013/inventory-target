@@ -4,150 +4,110 @@
     <meta charset="UTF-8">
     <title>@yield('title')</title>
     @vite(['resources/css/app.css','resources/js/app.js'])
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body class="bg-slate-100 font-sans">
+<body class="bg-slate-100 font-sans" x-data="{ sidebarCollapsed: false }">
 
 <div class="flex min-h-screen">
-    @php
-        $activeClass = 'bg-slate-700 text-white';
-    @endphp
+
     <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-white">
-        <div class="p-5 text-xl font-bold border-b border-slate-700">
-            Inventory Pro
+    <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" 
+           class="bg-slate-900 text-white transition-all duration-300 relative">
+
+        <div class="flex items-center justify-between p-5 border-b border-slate-700">
+            <span x-show="!sidebarCollapsed" class="text-xl font-bold">Inventory Pro</span>
+            <button @click="sidebarCollapsed = !sidebarCollapsed" class="text-white focus:outline-none">
+                <svg :class="sidebarCollapsed ? 'rotate-180' : ''" class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
         </div>
 
         <nav class="p-4 space-y-2 text-sm">
+            @php $activeClass = 'bg-slate-700 text-white'; @endphp
 
             <a href="/admin/dashboard"
-               class="block px-4 py-2 rounded-lg transition
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
                {{ request()->is('admin/dashboard') ? $activeClass : 'hover:bg-slate-700' }}">
-                Dashboard
+                <span class="material-icons">dashboard</span>
+                <span x-show="!sidebarCollapsed">Dashboard</span>
             </a>
 
             <a href="/admin/users"
-               class="block px-4 py-2 rounded-lg transition
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
                {{ request()->is('admin/users*') ? $activeClass : 'hover:bg-slate-700' }}">
-                User Management
+                <span class="material-icons">people</span>
+                <span x-show="!sidebarCollapsed">User Management</span>
             </a>
 
-            <!-- <a href="/admin/companies"
-               class="block px-4 py-2 rounded-lg transition
-               {{ request()->is('admin/companies*') ? $activeClass : 'hover:bg-slate-700' }}">
-                Companies Management
-            </a> -->
-
             <a href="/admin/product-listing"
-               class="block px-4 py-2 rounded-lg transition
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
                {{ request()->is('admin/product-listing*') ? $activeClass : 'hover:bg-slate-700' }}">
-                Product Management
+                <span class="material-icons">inventory_2</span>
+                <span x-show="!sidebarCollapsed">Product Management</span>
             </a>
 
             <a href="/admin/target-listing"
-               class="block px-4 py-2 rounded-lg transition
-               {{ request()->is('admin/target-listing*') || request()->is('admin/targets*') ? $activeClass : 'hover:bg-slate-700' }}">
-                Targets Management
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->is('admin/target-listing*') ? $activeClass : 'hover:bg-slate-700' }}">
+                <span class="material-icons">track_changes</span>
+                <span x-show="!sidebarCollapsed">Targets Management</span>
             </a>
 
             <a href="/admin/sales"
-               class="block px-4 py-2 rounded-lg transition
-               {{ request()->is('admin/sales*') || request()->is('admin/sales*') ? $activeClass : 'hover:bg-slate-700' }}">
-                Total Sales
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->is('admin/sales*') ? $activeClass : 'hover:bg-slate-700' }}">
+                <span class="material-icons">payments</span>
+                <span x-show="!sidebarCollapsed">Total Sales</span>
             </a>
 
-           @php $activeClass = 'bg-slate-700 text-white'; @endphp
-
             <a href="{{ route('admin.notifications') }}"
-               class="block px-4 py-2 rounded-lg transition
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
                {{ request()->is('admin/notifications*') ? $activeClass : 'hover:bg-slate-700' }}">
-                Notifications
+                <span class="material-icons">notifications</span>
+                <span x-show="!sidebarCollapsed">Notifications</span>
                 @if($adminUnreadCount > 0)
-                    <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                    <span x-show="!sidebarCollapsed" class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                         {{ $adminUnreadCount }}
                     </span>
                 @endif
             </a>
 
+            @php $roleSlug = strtolower(str_replace(' ', '-', auth()->user()->roles->first()->name ?? '')); @endphp
 
-
-
-            @php use App\Helpers\RoleHelper; @endphp
-            <a href="{{ route('role.profile', RoleHelper::slug(auth()->user()->roles->first()->name)) }}"
-               class="block px-4 py-2 rounded-lg transition
-               {{ request()->is('admin/profile') || request()->is('admin/profile') ? $activeClass : 'hover:bg-slate-700' }}">
-                Profile
+            <a href="{{ route('role.profile', $roleSlug) }}"
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->is('admin/profile') ? $activeClass : 'hover:bg-slate-700' }}">
+                <span class="material-icons">person</span>
+                <span x-show="!sidebarCollapsed">Profile</span>
             </a>
 
-            <!-- Logout -->
-            <form method="POST" action="{{ route('logout') }}" class="mt-4">
+
+            <form method="POST" action="{{ route('logout') }}" class="mt-4 px-4">
                 @csrf
                 <button type="submit"
-                    class="w-full text-left py-2 px-3 bg-red-600 text-white rounded hover:bg-red-700">
-                    Logout
+                        class="w-full flex items-center gap-3 py-2 px-3 bg-red-600 text-white rounded hover:bg-red-700">
+                    <span class="material-icons">logout</span>
+                    <span x-show="!sidebarCollapsed">Logout</span>
                 </button>
             </form>
-
         </nav>
 
     </aside>
 
     <!-- Main content -->
-    <main class="flex-1">
-
-        <!-- Top bar -->
+    <main class="flex-1 transition-all duration-300">
         <header class="bg-white px-6 py-4 shadow flex justify-between items-center">
-            <h1 class="text-xl font-semibold text-slate-800">
-                @yield('title')
-            </h1>
-
-            <div class="text-sm font-medium">
-                {{ auth()->user()->name }}
-            </div>
-
+            <h1 class="text-xl font-semibold text-slate-800">@yield('title')</h1>
+            <div class="text-sm font-medium">{{ auth()->user()->name }}</div>
         </header>
 
         <section class="p-6">
             @yield('content')
         </section>
-
     </main>
 
 </div>
-<script>
-document.querySelectorAll('.notif-item').forEach(item => {
-    item.addEventListener('click', function(e) {
-        e.preventDefault();
-        let id = this.dataset.id;
-        let el = this;
-
-        fetch(`/notifications/mark-as-read/${id}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                el.remove(); // Remove notification from dropdown
-
-                // Update counter
-                let countElem = document.getElementById('notif-count');
-                let count = parseInt(countElem.textContent);
-                count--;
-                if(count <= 0) {
-                    countElem.remove();
-                    document.getElementById('notif-dropdown').innerHTML = '<p class="px-4 py-2 text-gray-500">No new notifications</p>';
-                } else {
-                    countElem.textContent = count;
-                }
-            }
-        })
-        .catch(err => console.error(err));
-    });
-});
-</script>
-
 </body>
 </html>
