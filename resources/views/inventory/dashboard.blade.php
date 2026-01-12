@@ -9,7 +9,7 @@
     <br>
     {{-- Add Target Button --}}
     <button
-        onclick="openTargetModal()"
+        onclick="openProductModal()"
         class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
         + Add Target
     </button>
@@ -77,45 +77,37 @@
     {{ $products->links('pagination::tailwind') }}
 </div>
 
-{{-- Add Target Modal --}}
-<div id="targetModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+{{-- Add Product Modal --}}
+<div id="productModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
     <div class="bg-white rounded shadow-lg w-full max-w-md p-6 relative">
-        <h2 class="text-xl font-semibold mb-4">Add New Product Target</h2>
+        <h2 class="text-xl font-semibold mb-4">Add New Product</h2>
 
-        <form id="targetForm">
+        <form id="productForm" enctype="multipart/form-data">
             @csrf
 
             <label class="block mb-1 text-sm font-medium">Product Name</label>
-            <input type="text" name="product_name" placeholder="Enter product name"
+            <input type="text" name="name" placeholder="Enter product name"
                    class="w-full border px-3 py-2 rounded mb-3" required>
 
-            <label class="block mb-1 text-sm font-medium">Assign Executive</label>
-            <select name="executive_id" class="border w-full px-3 py-2 mb-3 rounded" required>
-                <option value="">Select Executive</option>
-                @foreach($executives as $exec)
-                    <option value="{{ $exec->id }}">{{ $exec->name }}</option>
-                @endforeach
+            <label class="block mb-1 text-sm font-medium">Product Image</label>
+            <input type="file" name="image" class="w-full mb-3" accept="image/*">
+
+            <label class="block mb-1 text-sm font-medium">Expiry Date</label>
+            <input type="date" name="expiry_date" class="w-full border px-3 py-2 mb-3 rounded">
+
+            <label class="block mb-1 text-sm font-medium">Composition</label>
+            <input type="text" name="composition" placeholder="Enter composition"
+                   class="w-full border px-3 py-2 mb-3 rounded">
+
+            <label class="block mb-1 text-sm font-medium">Type</label>
+            <select name="type" class="border w-full px-3 py-2 mb-3 rounded" required>
+                <option value="expiry">Expiry</option>
+                <option value="new">New</option>
             </select>
-
-            <label class="block mb-1 text-sm">Target Type</label>
-            <select name="target_type" class="border w-full px-3 py-2 mb-3 rounded" required>
-                <option value="">Select Type</option>
-                <option value="box">Box</option>
-                <option value="amount">Amount</option>
-            </select>
-
-            <label class="block mb-1 text-sm">Target Value</label>
-            <input type="number" name="target_value" class="border w-full px-3 py-2 mb-3 rounded" min="1" required>
-
-            <label class="block mb-1 text-sm">Start Date</label>
-            <input type="date" name="start_date" class="border w-full px-3 py-2 mb-3 rounded" required>
-
-            <label class="block mb-1 text-sm">End Date</label>
-            <input type="date" name="end_date" class="border w-full px-3 py-2 mb-3 rounded" required>
 
             <div class="flex justify-end space-x-2">
-                <button type="button" onclick="closeTargetModal()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save Target</button>
+                <button type="button" onclick="closeProductModal()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Add Product</button>
             </div>
 
             <p id="modalMessage" class="text-xs mt-2"></p>
@@ -123,6 +115,7 @@
 
     </div>
 </div>
+
 
 {{-- JS --}}
 <script>
@@ -144,56 +137,65 @@ function notifyAdmin(productId) {
     });
 }
 
-// Modal open/close
-function openTargetModal() {
-    document.getElementById('targetModal').classList.remove('hidden');
-    document.getElementById('targetModal').classList.add('flex');
+// Open/Close modal
+function openProductModal() {
+    document.getElementById('productModal').classList.remove('hidden');
+    document.getElementById('productModal').classList.add('flex');
 }
-function closeTargetModal() {
-    document.getElementById('targetModal').classList.remove('flex');
-    document.getElementById('targetModal').classList.add('hidden');
+function closeProductModal() {
+    document.getElementById('productModal').classList.remove('flex');
+    document.getElementById('productModal').classList.add('hidden');
 }
 
-// Submit target via AJAX
-document.getElementById('targetForm').addEventListener('submit', function(e){
+// Submit product via AJAX
+document.getElementById('productForm').addEventListener('submit', function(e){
     e.preventDefault();
 
     const form = this;
     const message = document.getElementById('modalMessage');
     message.textContent = '';
 
+    let formData = new FormData(form);
+
     fetch("{{ route('inventory.target.store') }}", {
         method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            product_name: form.product_name.value,
-            target_type: form.target_type.value,
-             executive_id: form.executive_id.value,
-            target_value: form.target_value.value,
-            start_date: form.start_date.value,
-            end_date: form.end_date.value
-        })
+        body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success){
-            message.textContent = data.message;
-            message.className = 'text-green-600 mt-2';
-            setTimeout(() => location.reload(), 1200);
-        } else {
-            message.textContent = data.message || 'Error occurred';
-            message.className = 'text-red-600 mt-2';
-        }
-    })
-    .catch(() => {
+    .then(async res => {
+    let data;
+    try {
+        data = await res.json();
+    } catch(e) {
+        console.error('Invalid JSON from server', e);
+        data = {success:false, message:'Invalid server response'};
+    }
+
+    console.log(data); // <- now you'll see actual error
+
+    if(!res.ok){
+        message.textContent = data.message || 'Server error occurred!';
+        message.className = 'text-red-600 mt-2';
+        return;
+    }
+
+    if(data.success){
+        message.textContent = data.message;
+        message.className = 'text-green-600 mt-2';
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        message.textContent = data.message || 'Error occurred';
+        message.className = 'text-red-600 mt-2';
+    }
+})
+
+    .catch(err => {
+        // Network or unexpected JS error
+        console.error('Fetch failed:', err);
         message.textContent = 'Something went wrong!';
         message.className = 'text-red-600 mt-2';
     });
 });
+
 </script>
 
 @endsection

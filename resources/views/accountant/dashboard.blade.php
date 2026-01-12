@@ -18,7 +18,7 @@
                 <th class="px-4 py-3 border text-right">Boxes</th>
                 <th class="px-4 py-3 border text-right">Amount</th>
                 <th class="px-4 py-3 border">Date</th>
-                <th class="px-4 py-3 border">Status</th>
+                <th class="px-4 py-3 border">Product Admin Status</th>
                 <th class="px-4 py-3 border">Action</th>
             </tr>
         </thead>
@@ -80,7 +80,7 @@
                             </button>
                         </div>
                     @else
-                        <span class="text-gray-400 text-xs">—</span>
+                        <span class="text-blue-800 text-xs">{{$sale->status}}</span>
                     @endif
                 </td>
             </tr>

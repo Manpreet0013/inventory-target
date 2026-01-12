@@ -5,31 +5,87 @@ namespace App\Http\Controllers\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\User;
-use App\Models\Target;
 use Illuminate\Http\Request;
 use App\Notifications\InventoryNotification;
 
 class DashboardController extends Controller
 {
+    // ================= DASHBOARD =================
     public function index(Request $request)
     {
         $products = Product::query()
             ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '<=', now()->addMonths(6))
             ->orderBy('expiry_date')
-            ->paginate(15); // ✅ pagination for future data
+            ->paginate(15);
 
         $executives = User::role('Executive')->get();
 
         return view('inventory.dashboard', compact('products','executives'));
     }
 
+    // ================= STORE PRODUCT =================
+    public function storeTarget(Request $request)
+    {
+        try {
+            $request->validate([
+                'name'        => 'required|string|max:255',
+                'expiry_date' => 'nullable|date',
+                'composition' => 'nullable|string|max:255',
+                'type'        => 'required|in:expiry,new',
+                'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ]);
+
+            $imagePath = $request->hasFile('image') ? $request->file('image')->store('products', 'public') : null;
+
+            $product = Product::create([
+                'name'         => $request->name,
+                'expiry_date'  => $request->expiry_date,
+                'composition'  => $request->composition,
+                'type'         => $request->type,
+                'image'        => $imagePath,
+            ]);
+
+            // Fetch admins inside method
+            $admins = User::role('Admin')->get();
+
+            foreach ($admins as $admin) {
+                try {
+                    $admin->notify(new InventoryNotification(
+                        auth()->user()->name.' added a new product: ' . $product->name,
+                        route('inventory.products', $product->id)
+                    ));
+
+                } catch (\Exception $e) {
+                    \Log::error('InventoryNotification failed', [
+                        'admin_id' => $admin->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product added successfully!',
+                'product' => $product
+            ]);
+
+        } catch (\Exception $e) {
+            // Return JSON with error message instead of HTML
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ================= NOTIFY ADMIN =================
     public function notifyAdmin(Product $product)
     {
-        // 🔒 extra safety
         abort_if(!$product->expiry_date, 404);
 
-        // Optional: prevent duplicate notifications
         if ($product->notified_at) {
             return response()->json([
                 'success' => false,
@@ -37,64 +93,25 @@ class DashboardController extends Controller
             ]);
         }
 
-        // Optional column (recommended)
+        // Update notified_at column
         $product->update(['notified_at' => now()]);
+
+        // Notify admins safely
+        $admins = User::role('Admin')->get();
+        foreach ($admins as $admin) {
+            try {
+                $admin->notify(new InventoryNotification(
+                    auth()->user()->name.' flagged product for expiry: '.$product->name,
+                    route('inventory.products', $product->id)
+                ));
+            } catch (\Exception $e) {
+                \Log::error('NotifyAdmin failed: '.$e->getMessage());
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Admin notified successfully'
-        ]);
-    }
-    public function storeTarget(Request $request)
-    {
-        $request->validate([
-            'product_name' => 'required|string|max:255',
-            'target_type'  => 'required|in:box,amount',
-            'target_value' => 'required|integer|min:1',
-            'start_date'   => 'required|date',
-            'end_date'     => 'required|date|after_or_equal:start_date',
-        ]);
-
-        $product = \App\Models\Product::firstOrCreate(
-                        ['name' => $request->product_name], // search by name
-                        [
-                            'type' => 'expiry',               // set type
-                            'expiry_date' => $request->end_date, // set expiry_date
-                        ]
-                    );
-
-
-        // Enforce one target per product
-        if ($product->targets()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Target already exists for this product'
-            ]);
-        }
-
-        $target = \App\Models\Target::create([
-            'product_id'   => $product->id,
-            'target_type'  => $request->target_type,
-            'target_value' => $request->target_value,
-            'start_date'   => $request->start_date,
-            'end_date'     => $request->end_date,
-            'status'       => 'pending',
-            'executive_id' => $request->executive_id,
-            'created_by'   => auth()->id(),
-        ]);
-
-        $admins = User::role('Admin')->get();
-
-        foreach ($admins as $admin) {
-            $admin->notify(new InventoryNotification(
-                auth()->user()->name . ' added a new target for executive '
-            ));
-        }
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Target created successfully!'
         ]);
     }
     public function targets_listing()
