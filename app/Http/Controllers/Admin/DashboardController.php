@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\InventoryNotification;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -222,11 +223,57 @@ class DashboardController extends Controller
         return view('admin.products.product_details', compact('product','target','childTargets'));
     }
 
-    public function targets_listing()
+    public function targets_listing(Request $request)
     {
-        $targets = Target::with(['product', 'executive'])->whereNull('parent_id')->latest()->get();
-        return view('admin.targets.targets', compact('targets'));
+        $statusFilter = $request->status;
+        $today = Carbon::today();
+
+        $targets = Target::with([
+                'product',
+                'executive',
+                'sales' => function ($q) {
+                    $q->where('status', 'approved')
+                      ->where('accountant_status', 'approved');
+                }
+            ])
+            ->whereNull('parent_id')
+            ->latest()
+            ->get()
+            ->filter(function ($target) use ($statusFilter, $today) {
+
+                if (!$statusFilter) {
+                    return true; // no filter applied
+                }
+
+                // Expired
+                if ($today->gt(Carbon::parse($target->end_date))) {
+                    return $statusFilter === 'expired';
+                }
+
+                $valueColumn = $target->target_type === 'amount' ? 'amount' : 'boxes_sold';
+                $totalSales = $target->sales->sum($valueColumn);
+
+                $executiveCount = $target->executives_count ?? 1;
+                $perExecutiveTarget = $target->target_value / max($executiveCount, 1);
+
+                $executivesMetTarget = $target->sales
+                    ->groupBy('executive_id')
+                    ->filter(fn ($sales) => $sales->sum($valueColumn) >= $perExecutiveTarget)
+                    ->count();
+
+                if ($totalSales >= $target->target_value) {
+                    if ($executivesMetTarget == $executiveCount) {
+                        return $statusFilter === 'achieved_full';
+                    }
+                    return $statusFilter === 'achieved_partial';
+                }
+
+                return $statusFilter === 'not_achieved';
+            });
+
+        return view('admin.targets.targets', compact('targets', 'statusFilter'));
     }
+
     public function sales(Request $request)
     {
         $status        = $request->status;

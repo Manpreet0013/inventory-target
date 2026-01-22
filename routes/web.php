@@ -135,7 +135,7 @@ Route::middleware(['auth', 'role:Admin'])
 | Inventory Manager Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:Inventory Manager'])
+Route::middleware(['auth', 'role:Inventory Manager', 'ip.whitelist'])
     ->prefix('inventory')
     ->group(function () {
 
@@ -159,7 +159,7 @@ Route::middleware(['auth', 'role:Inventory Manager'])
 | Executive Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:Executive'])
+Route::middleware(['auth', 'role:Executive', 'ip.whitelist'])
     ->prefix('executive')
     ->group(function () {
 
@@ -223,7 +223,7 @@ Route::middleware(['auth', 'role:Executive'])
 | Accountant Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:Accountant'])
+Route::middleware(['auth', 'role:Accountant', 'ip.whitelist'])
     ->prefix('accountant')
     ->group(function () {
 

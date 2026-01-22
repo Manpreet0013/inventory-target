@@ -41,13 +41,22 @@
                class="border w-full px-2 py-1 mb-3 rounded" required>
         <p class="text-sm text-gray-500">Allowed: {{ $target->start_date }} to {{ $target->end_date }}</p>
 
-        @if($target->target_type === 'box')
+        <!-- @if($target->target_type === 'box')
             <label class="block mb-1 font-medium">Boxes Sold</label>
             <input type="number" name="boxes_sold" min="1" max="{{ $target->remainingValue() }}"
                    placeholder="Boxes Sold" class="border w-full px-2 py-1 rounded mb-3" required>
         @else
             <label class="block mb-1 font-medium">Amount</label>
             <input type="number" name="amount" min="1" max="{{ $target->remainingValue() }}"
+                   placeholder="Amount" class="border w-full px-2 py-1 rounded mb-3" required>
+        @endif -->
+        @if($target->target_type === 'box')
+            <label class="block mb-1 font-medium">Boxes Sold</label>
+            <input type="number" name="boxes_sold" min="1" 
+                   placeholder="Boxes Sold" class="border w-full px-2 py-1 rounded mb-3" required>
+        @else
+            <label class="block mb-1 font-medium">Amount</label>
+            <input type="number" name="amount" min="1" 
                    placeholder="Amount" class="border w-full px-2 py-1 rounded mb-3" required>
         @endif
 

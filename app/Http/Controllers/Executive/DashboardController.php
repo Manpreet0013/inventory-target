@@ -230,7 +230,7 @@ class DashboardController extends Controller
         $field = $target->target_type === 'box' ? 'boxes_sold' : 'amount';
         $value = $request->$field;
 
-        abort_if($value <= 0 || $value > $target->remainingValue(),422);
+        // abort_if($value <= 0 || $value > $target->remainingValue(),422);
 
         Sale::create([
             'target_id'=>$target->id,
