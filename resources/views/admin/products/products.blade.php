@@ -67,7 +67,7 @@
                     </td>
 
                     <td class="px-4 py-3 text-center font-semibold">
-                        {{ $product->targets()->count() }}
+                        {{ $product->targets()->whereNull('parent_id')->count() }}
                     </td>
 
                     <td class="px-4 py-3 text-center">
@@ -85,17 +85,45 @@
                         @endif
                     </td>
 
+                    @php
+                        $parentTarget = $product->targets->whereNull('parent_id')->first();
+                        $parentTargetCount = $parentTarget ? 1 : 0;
+                    @endphp
+                    
                     <td class="px-4 py-3 text-center space-x-2">
-                        <a href="{{ route('admin.products.details',$product->id) }}"
+
+                        <!-- View Button -->
+                        <a href="{{ route('admin.products.details', $product->id) }}"
                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs">
                             View
                         </a>
 
-                        <a href="{{ route('admin.targets') }}"
-                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs">
-                            Add
-                        </a>
+                        @if ($parentTargetCount === 0)
+                            <!-- Add Button -->
+                            <a href="{{ route('admin.targets', ['product_id' => $product->id]) }}"
+                               class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs">
+                                Add
+                            </a>
+                        @endif
+
+                        @if ($parentTargetCount === 1)
+                            <!-- Delete Target -->
+                            <form action="{{ route('admin.product.destroy', $product->id) }}"
+                                  method="POST"
+                                  class="inline">
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                    onclick="return confirm('Are you sure you want to delete this target?')"
+                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs">
+                                    Delete
+                                </button>
+                            </form>
+                        @endif
+
                     </td>
+
                 </tr>
                 @empty
                 <tr>

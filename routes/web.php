@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Inventory\DashboardController as InventoryDashboard;
 use App\Http\Controllers\Executive\DashboardController as ExecutiveDashboard;
 use App\Http\Controllers\Accountant\DashboardController as AccountantDashboard;
+use App\Http\Controllers\Admin\TrackingIpController;
 
 /*
 |--------------------------------------------------------------------------
@@ -128,6 +129,16 @@ Route::middleware(['auth', 'role:Admin'])
 
         Route::get('/notifications', [AdminDashboard::class,'notification'])->name('admin.notifications');
         Route::get('/notifications/read/{id}', [AdminDashboard::class,'markAsRead'])->name('admin.notifications.read');
+
+        Route::get('/tracking-ips', [TrackingIpController::class, 'index'])
+            ->name('admin.tracking.ips');
+
+        Route::post('/tracking-ips', [TrackingIpController::class, 'update'])
+            ->name('admin.tracking.ips.update');
+
+        Route::delete('/product/{product}', [AdminDashboard::class, 'destroy'])
+            ->name('admin.product.destroy');
+
     });
 
 /*

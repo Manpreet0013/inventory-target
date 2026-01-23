@@ -17,61 +17,65 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // =====================
-        // MAIN TARGETS ONLY
-        // =====================
-        $mainTargets = Target::whereNull('parent_id');
+        // ====== BASIC COUNTS ======
+        $totalProducts   = Product::count();
+        $totalTargets    = Target::whereNull('parent_id')->count();
+        $totalExecutives = User::role('executive')->count();
 
-        // Summary
-        $totalProducts    = Product::count();
-        $totalExecutives  = User::role('Executive')->count();
-        $totalTargets     = $mainTargets->count();
+        // ====== TARGET TOTALS ======
+        $totalTargetAmount = Target::where('target_type','amount')
+            ->whereNull('parent_id')
+            ->sum('target_value');
 
-        $activeTargets = (clone $mainTargets)->where('status', 'accepted')->count();
-        $pendingTargets = (clone $mainTargets)->where('status', 'pending')->count();
-        $expiredTargets = (clone $mainTargets)->where('status', 'rejected')->count();
+        $totalTargetBoxes = Target::where('target_type','box')
+            ->whereNull('parent_id')
+            ->sum('target_value');
 
-        // Latest MAIN Targets
-        $latestTargets = Target::with(['product', 'executive', 'creator'])
+        // ====== APPROVED SALES (FULLY APPROVED) ======
+        $approvedAmount = Sale::where('status','approved')
+            ->where('accountant_status','approved')
+            ->whereNotNull('amount')
+            ->sum('amount');
+
+        $approvedBoxes = Sale::where('status','approved')
+            ->where('accountant_status','approved')
+            ->sum('boxes_sold');
+
+        // ====== PENDING ======
+        $pendingAmount = max($totalTargetAmount - $approvedAmount, 0);
+        $pendingBoxes  = max($totalTargetBoxes - $approvedBoxes, 0);
+
+        // ====== EXPIRED TARGETS ======
+        $expiredTargets = Target::whereNotNull('end_date')
+            ->whereDate('end_date','<',Carbon::today())
+            ->whereNull('parent_id')
+            ->count();
+
+        // ====== APPROVED SALES COUNT ======
+        $approvedSales = Sale::where('status','approved')
+            ->where('accountant_status','approved')
+            ->count();
+
+        // ====== LATEST TARGETS ======
+        $targets = Target::with(['product','executive','sales'])
             ->whereNull('parent_id')
             ->latest()
-            ->take(5)
+            ->take(10)
             ->get();
-
-        // Chart: Status
-        $chartStatusData = [
-            'active'  => $activeTargets,
-            'pending' => $pendingTargets,
-            'expired' => $expiredTargets,
-        ];
-
-        // Chart: Targets by Product (MAIN ONLY)
-        $targetsByProduct = Product::withCount([
-            'targets as targets_count' => function ($q) {
-                $q->whereNull('parent_id');
-            }
-        ])->pluck('targets_count', 'name');
-
-        // Chart: Targets by Executive (MAIN ONLY)
-        $targetsByExecutive = User::role('Executive')
-            ->withCount([
-                'targets as targets_count' => function ($q) {
-                    $q->whereNull('parent_id');
-                }
-            ])
-            ->pluck('targets_count', 'name');
 
         return view('admin.dashboard', compact(
             'totalProducts',
-            'totalExecutives',
             'totalTargets',
-            'activeTargets',
+            'totalExecutives',
+            'totalTargetAmount',
+            'totalTargetBoxes',
+            'approvedAmount',
+            'approvedBoxes',
+            'pendingAmount',
+            'pendingBoxes',
             'expiredTargets',
-            'pendingTargets',
-            'latestTargets',
-            'chartStatusData',
-            'targetsByProduct',
-            'targetsByExecutive'
+            'approvedSales',
+            'targets'
         ));
     }
     public function products()
@@ -395,4 +399,13 @@ class DashboardController extends Controller
 
         return redirect()->back();
     }
+    public function destroy(Product $product)
+    {
+        $product->delete();
+
+        return redirect()
+            ->route('admin.products')
+            ->with('success', 'Product and related targets deleted successfully.');
+    }
+
 }
