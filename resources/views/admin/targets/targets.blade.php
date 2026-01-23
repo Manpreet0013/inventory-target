@@ -31,7 +31,7 @@
                 <tr>
                     <th class="px-4 py-3">#</th>
                     <th class="px-4 py-3">Product</th>
-                    <th class="px-4 py-3">Executive</th>
+                    <th class="px-4 py-3">Product Admin</th>
                     <th class="px-4 py-3">Type</th>
                     <th class="px-4 py-3">Value</th>
                     <th class="px-4 py-3">Start Date</th>
