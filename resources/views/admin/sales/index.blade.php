@@ -128,7 +128,7 @@
                 <tr class="border-t hover:bg-gray-50">
 
                     <td class="p-3 font-semibold">
-                        {{ $sale->invoice_number }}
+                        {{ $sale->invoice_number ? $sale->invoice_number : 'New Launch' }}
                     </td>
 
                     <td class="p-3">{{ $sale->party_name }}</td>

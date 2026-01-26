@@ -83,6 +83,15 @@
                 <span x-show="!sidebarCollapsed">Profile</span>
             </a>
 
+            <a href="{{ route('admin.tracking.ips') }}"
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->routeIs('admin.tracking.ips*') ? $activeClass : 'hover:bg-slate-700' }}">
+                
+                <span class="material-icons">security</span>
+                <span x-show="!sidebarCollapsed">Tracking IPs</span>
+            </a>
+
+
 
             <form method="POST" action="{{ route('logout') }}" class="mt-4 px-4">
                 @csrf

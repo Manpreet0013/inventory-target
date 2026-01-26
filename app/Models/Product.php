@@ -47,4 +47,18 @@ class Product extends Model
 
         return $this->targets->isNotEmpty();
     }
+    protected static function booted()
+    {
+        static::deleting(function ($product) {
+
+            // delete sales of ALL targets (parent + child)
+            $product->targets()->each(function ($target) {
+                $target->sales()->delete();
+            });
+
+            // delete all targets (parent + child)
+            $product->targets()->delete();
+        });
+    }
+
 }
