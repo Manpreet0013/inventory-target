@@ -17,67 +17,88 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ====== BASIC COUNTS ======
-        $totalProducts   = Product::count();
-        $totalTargets    = Target::whereNull('parent_id')->count();
-        $totalExecutives = User::role('executive')->count();
+        $today = Carbon::today();
 
-        // ====== TARGET TOTALS ======
-        $totalTargetAmount = Target::where('target_type','amount')
+        // =========================
+        // PRODUCTS
+        // =========================
+        $totalProducts = Product::count();
+
+        $targetSetProducts = Product::whereHas('targets', function ($q) {
+            $q->whereNull('parent_id');
+        })->count();
+
+        $targetNotSetProducts = $totalProducts - $targetSetProducts;
+
+        // =========================
+        // TARGETS (USE SAME LOGIC AS TABLE)
+        // =========================
+        $targets = Target::with('sales')
             ->whereNull('parent_id')
-            ->sum('target_value');
-
-        $totalTargetBoxes = Target::where('target_type','box')
-            ->whereNull('parent_id')
-            ->sum('target_value');
-
-        // ====== APPROVED SALES (FULLY APPROVED) ======
-        $approvedAmount = Sale::where('status','approved')
-            ->where('accountant_status','approved')
-            ->whereNotNull('amount')
-            ->sum('amount');
-
-        $approvedBoxes = Sale::where('status','approved')
-            ->where('accountant_status','approved')
-            ->sum('boxes_sold');
-
-        // ====== PENDING ======
-        $pendingAmount = max($totalTargetAmount - $approvedAmount, 0);
-        $pendingBoxes  = max($totalTargetBoxes - $approvedBoxes, 0);
-
-        // ====== EXPIRED TARGETS ======
-        $expiredTargets = Target::whereNotNull('end_date')
-            ->whereDate('end_date','<',Carbon::today())
-            ->whereNull('parent_id')
-            ->count();
-
-        // ====== APPROVED SALES COUNT ======
-        $approvedSales = Sale::where('status','approved')
-            ->where('accountant_status','approved')
-            ->count();
-
-        // ====== LATEST TARGETS ======
-        $targets = Target::with(['product','executive','sales'])
-            ->whereNull('parent_id')
-            ->latest()
-            ->take(10)
             ->get();
 
+        $totalTargets     = $targets->count();
+        $currentTargets   = 0;
+        $expiredTargets   = 0;
+        $achievedFully    = 0;
+        $achievedPartial  = 0;
+
+        foreach ($targets as $target) {
+
+            // ===== TARGET EXPIRED =====
+            if ($target->end_date && $today->gt(Carbon::parse($target->end_date))) {
+                $expiredTargets++;
+                continue;
+            }
+
+            $currentTargets++;
+
+            // ===== SAME VALUE COLUMN LOGIC =====
+            $valueColumn = $target->target_type === 'amount'
+                ? 'amount'
+                : 'boxes_sold';
+
+            // ===== VALID SALES =====
+            $validSales = $target->sales->filter(function ($sale) {
+                return $sale->status === 'approved'
+                    && $sale->accountant_status === 'approved';
+            });
+
+            $totalSales = $validSales->sum($valueColumn);
+
+            // ===== EXECUTIVE PARTICIPATION =====
+            $executiveCount = $target->executives_count ?? 1;
+            $perExecutiveTarget = $target->target_value / max($executiveCount, 1);
+
+            $executivesMetTarget = $validSales
+                ->groupBy('executive_id')
+                ->filter(fn ($sales) => $sales->sum($valueColumn) >= $perExecutiveTarget)
+                ->count();
+
+            // ===== ACHIEVEMENT STATUS =====
+            if ($totalSales >= $target->target_value) {
+
+                if ($executivesMetTarget == $executiveCount) {
+                    $achievedFully++;
+                } else {
+                    $achievedPartial++;
+                }
+
+            }
+        }
+
         return view('admin.dashboard', compact(
-            'totalProducts',
             'totalTargets',
-            'totalExecutives',
-            'totalTargetAmount',
-            'totalTargetBoxes',
-            'approvedAmount',
-            'approvedBoxes',
-            'pendingAmount',
-            'pendingBoxes',
+            'currentTargets',
             'expiredTargets',
-            'approvedSales',
-            'targets'
+            'achievedFully',
+            'achievedPartial',
+            'totalProducts',
+            'targetSetProducts',
+            'targetNotSetProducts'
         ));
     }
+
     public function products()
     {
         return view('admin.products.index', [
