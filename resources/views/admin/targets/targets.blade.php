@@ -65,6 +65,7 @@
                     <th class="px-4 py-3">Executive</th>
                     <th class="px-4 py-3">Type</th>
                     <th class="px-4 py-3">Target</th>
+                    <th class="px-4 py-3">Achieved</th>
                     <th class="px-4 py-3">Pending</th>
                     <th class="px-4 py-3">Start Date</th>
                     <th class="px-4 py-3">End Date</th>
@@ -145,6 +146,18 @@
                         </span>
                     </td>
                     <td class="px-4 py-3 font-semibold">{{ $target->target_value }}</td>
+
+                    <td class="px-4 py-3">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-green-700">
+                                {{ $totalSales }}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                {{ round(($totalSales / $target->target_value) * 100, 1) }}%
+                            </span>
+                        </div>
+                    </td>
+
 
                     <!-- ✅ PENDING VALUE -->
                     <td class="px-4 py-3 font-semibold">
