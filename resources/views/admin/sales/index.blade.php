@@ -61,7 +61,7 @@
 
 
     {{-- STATS (ONE ROW) --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
 
         <div class="min-w-[220px] bg-white rounded-xl shadow p-4">
             <p class="text-sm text-gray-500">Total Sales</p>
@@ -80,10 +80,10 @@
             <h2 class="text-2xl font-bold">{{ $stats['pending'] }}</h2>
         </div>
 
-        <div class="min-w-[220px] bg-red-500 text-white rounded-xl shadow p-4">
+        <!-- <div class="min-w-[220px] bg-red-500 text-white rounded-xl shadow p-4">
             <p class="text-sm opacity-90">Rejected</p>
             <h2 class="text-2xl font-bold">{{ $stats['rejected'] }}</h2>
-        </div>
+        </div> -->
 
     </div>
 
