@@ -11,6 +11,7 @@
 
     <div class="row g-4 mb-4">
 
+
         <!-- Total -->
         <div class="col-md-4">
             <a href="{{ route('admin.list') }}" class="card-link">
@@ -18,6 +19,12 @@
                     <div class="stat-icon bg-primary">
                         <span class="material-icons">flag</span>
                     </div>
+
+        <a href="{{ route('admin.list') }}"
+           class="block bg-green-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
+            <p>Current</p>
+            <h2 class="text-3xl font-bold">{{ $currentTargets }}</h2>
+        </a>
 
                     <div>
                         <p>Total Targets</p>

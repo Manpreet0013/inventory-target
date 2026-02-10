@@ -13,13 +13,16 @@ class IpWhitelist
     {
         $ips = Setting::get('tracking_allowed_ips');
 
-        if (!$ips) {
-            abort(403, 'IP whitelist not configured.');
+        // ✅ If no IPs configured → allow all
+        if (empty($ips)) {
+            return $next($request);
         }
 
-        $allowedIps = array_map('trim', explode("\n", $ips));
+        // Convert stored IPs into array
+        $allowedIps = array_filter(array_map('trim', explode("\n", $ips)));
 
-        if (! in_array($request->ip(), $allowedIps)) {
+        // Check IP
+        if (!in_array($request->ip(), $allowedIps)) {
             abort(403, 'Access denied. IP not allowed.');
         }
 
