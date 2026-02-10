@@ -20,11 +20,7 @@
                         <span class="material-icons">flag</span>
                     </div>
 
-        <a href="{{ route('admin.list') }}"
-           class="block bg-green-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Current</p>
-            <h2 class="text-3xl font-bold">{{ $currentTargets }}</h2>
-        </a>
+       
 
                     <div>
                         <p>Total Targets</p>
