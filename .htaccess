@@ -1,0 +1,24 @@
+# Apache configuration file for Laravel
+
+# Enable mod_rewrite engine
+<IfModule mod_rewrite.c>
+RewriteEngine On
+</IfModule>
+
+# Deny access to .env files
+<Files .env>
+Order allow,deny
+Deny from all
+</Files>
+
+# 🚨 ADD THIS BEFORE THE REDIRECT RULES
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# ✅ Allow direct access to sitemap.xml at root
+RewriteCond %{REQUEST_URI} ^/sitemap.xml$
+RewriteRule ^sitemap\.xml$ sitemap.xml [L]
+
+# Redirect all other requests to the public directory
+RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

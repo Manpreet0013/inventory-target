@@ -3,81 +3,104 @@
 @section('title','Assign Target')
 
 @section('content')
-<div class="container mx-auto mt-6">
-    <div class="bg-white shadow-md rounded px-6 py-6">
+<div class="container py-4">
 
-        <!-- Message Box -->
-        <div id="formMessage" class="p-3 rounded text-white hidden mb-4"></div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
 
-        <form id="targetForm" class="space-y-4">
-            @csrf
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🎯 Assign Target</h5>
+                    <a href="{{ url()->previous() }}" class="btn btn-light btn-sm">Back</a>
+                </div>
 
-            <!-- Product -->
-            <div>
-                <label for="product_id" class="block font-semibold mb-1">Product</label>
-                <select name="product_id" id="product_id" class="w-full border rounded px-3 py-2">
-                    @foreach($products as $product)
-                        <option value="{{ $product->id }}"
-                                data-start="{{ $product->created_at->format('Y-m-d') }}"
-                                data-end="{{ $product->expiry_date }}"
-                                data-type="{{ $product->type }}">
-                            {{ $product->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <div class="card-body">
+
+                    <!-- Message Box -->
+                    <div id="formMessage" class="alert d-none"></div>
+
+                    <form id="targetForm">
+                        @csrf
+
+                        <div class="row g-3">
+
+                            <!-- Product -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Product</label>
+                                <select name="product_id" id="product_id" class="form-select">
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}"
+                                                data-start="{{ $product->created_at->format('Y-m-d') }}"
+                                                data-end="{{ $product->expiry_date }}"
+                                                data-type="{{ $product->type }}">
+                                            {{ $product->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Executive -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Executive</label>
+                                <select name="executive_id" class="form-select">
+                                    @foreach($executives as $exe)
+                                        <option value="{{ $exe->id }}">{{ $exe->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Target Type -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Target Type</label>
+                                <select name="target_type" class="form-select">
+                                    <option value="box">Box</option>
+                                    <option value="amount">Amount</option>
+                                </select>
+                            </div>
+
+                            <!-- Target Value -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Target Value</label>
+                                <input type="number" name="target_value" class="form-control" placeholder="Enter Target Value">
+                            </div>
+
+                            <!-- Start Date -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Date</label>
+                                <input type="date" name="start_date" id="start_date" class="form-control">
+                            </div>
+
+                            <!-- End Date -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Date</label>
+                                <input type="date" name="end_date" id="end_date" class="form-control">
+                            </div>
+
+                        </div>
+
+                        <!-- Loader -->
+                        <div id="loader" class="mt-3 text-primary fw-semibold d-none">
+                            Saving... Please wait
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-success px-4">
+                                Assign Target
+                            </button>
+                            <button type="reset" class="btn btn-secondary px-4">
+                                Reset
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
             </div>
 
-            <!-- Executive -->
-            <div>
-                <label for="executive_id" class="block font-semibold mb-1">Executive</label>
-                <select name="executive_id" id="executive_id" class="w-full border rounded px-3 py-2">
-                    @foreach($executives as $exe)
-                        <option value="{{ $exe->id }}">{{ $exe->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Target Type -->
-            <div>
-                <label for="target_type" class="block font-semibold mb-1">Target Type</label>
-                <select name="target_type" id="target_type" class="w-full border rounded px-3 py-2">
-                    <option value="box">Box</option>
-                    <option value="amount">Amount</option>
-                </select>
-            </div>
-
-            <!-- Target Value -->
-            <div>
-                <label for="target_value" class="block font-semibold mb-1">Target Value</label>
-                <input type="text" name="target_value" id="target_value" class="w-full border rounded px-3 py-2" placeholder="Target Value">
-            </div>
-
-            <!-- Start Date -->
-            <div>
-                <label for="start_date" class="block font-semibold mb-1">Start Date</label>
-                <input type="date" name="start_date" id="start_date" class="w-full border rounded px-3 py-2">
-            </div>
-
-            <!-- End Date -->
-            <div>
-                <label for="end_date" class="block font-semibold mb-1">End Date</label>
-                <input type="date" name="end_date" id="end_date" class="w-full border rounded px-3 py-2">
-            </div>
-
-            <!-- Loader -->
-            <div id="loader" class="hidden font-semibold">Saving...</div>
-
-            <div class="flex gap-3">
-                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                    Assign Target
-                </button>
-                <a href="{{ url()->previous() }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition">
-                    Back
-                </a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
 
 <script>
 const targetForm = document.getElementById('targetForm');
@@ -86,101 +109,83 @@ const loader = document.getElementById('loader');
 const productSelect = document.getElementById('product_id');
 const startDateInput = document.getElementById('start_date');
 const endDateInput = document.getElementById('end_date');
-const submitBtn = targetForm.querySelector('button[type="submit"]');
 
-function updateDates() {
+function showMessage(msg,type='success'){
+    messageBox.classList.remove('d-none','alert-success','alert-danger');
+    messageBox.classList.add(type==='success'?'alert-success':'alert-danger');
+    messageBox.innerHTML = msg;
+}
+
+function updateDates(){
     const selected = productSelect.options[productSelect.selectedIndex];
     const start = selected.dataset.start;
-    const end = selected.dataset.end;
-    const type = selected.dataset.type;
+    const end   = selected.dataset.end;
+    const type  = selected.dataset.type;
     const today = new Date().toISOString().split('T')[0];
 
     startDateInput.min = start;
     startDateInput.max = end;
-    endDateInput.min = start;
-    endDateInput.max = end;
+    endDateInput.min   = start;
+    endDateInput.max   = end;
 
     startDateInput.value = start;
-    endDateInput.value = end;
+    endDateInput.value   = end;
 
-    if (type === 'expiry' && end < today) {
-        messageBox.innerHTML = '❌ This product is expired. Target cannot be assigned.';
-        messageBox.classList.remove('hidden', 'bg-green-500');
-        messageBox.classList.add('bg-red-500');
-        submitBtn.disabled = true;
-    } else {
-        messageBox.classList.add('hidden');
-        submitBtn.disabled = false;
+    if(type==='expiry' && end < today){
+        showMessage('❌ This product is expired. Target cannot be assigned.','danger');
+        targetForm.querySelector('button[type="submit"]').disabled = true;
+    }else{
+        messageBox.classList.add('d-none');
+        targetForm.querySelector('button[type="submit"]').disabled = false;
     }
 }
 
 updateDates();
-productSelect.addEventListener('change', updateDates);
+productSelect.addEventListener('change',updateDates);
 
-targetForm.addEventListener('submit', function(e){
+
+targetForm.addEventListener('submit',function(e){
     e.preventDefault();
-    messageBox.classList.add('hidden');
-    loader.classList.remove('hidden');
 
-    fetch('/admin/targets/store', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value,
-            'Accept': 'application/json'
+    loader.classList.remove('d-none');
+    messageBox.classList.add('d-none');
+
+    fetch('/admin/targets/store',{
+        method:'POST',
+        headers:{
+            'X-CSRF-TOKEN':document.querySelector('input[name=_token]').value,
+            'Accept':'application/json'
         },
-        body: new FormData(this)
+        body:new FormData(this)
     })
-    .then(async response => {
-        const data = await response.json();
-        loader.classList.add('hidden');
+    .then(async res=>{
+        const data = await res.json();
+        loader.classList.add('d-none');
 
-        if (!response.ok) {
-            let msg = '';
-
-            if (response.status === 422) {
-                if (data.errors) {
-                    Object.values(data.errors).forEach(err => {
-                        msg += err[0] + '<br>';
-                    });
-                } else if (data.message) {
-                    msg = data.message;
-                } else {
-                    msg = 'Validation error';
-                }
-            } else {
-                msg = data.message || 'Something went wrong';
+        if(!res.ok){
+            let msg='';
+            if(data.errors){
+                Object.values(data.errors).forEach(e=>msg+=e[0]+'<br>');
+            }else{
+                msg=data.message||'Error occurred';
             }
-
-            messageBox.innerHTML = msg;
-            messageBox.classList.remove('hidden', 'bg-green-500');
-            messageBox.classList.add('bg-red-500');
+            showMessage(msg,'danger');
             return;
         }
 
-        messageBox.innerHTML = data.message;
-        messageBox.classList.remove('hidden', 'bg-red-500');
-        messageBox.classList.add('bg-green-500');
+        showMessage(data.message,'success');
 
-        setTimeout(() => {
-            window.location.href = `/admin/product-listing/${data.product_id}`;
-        }, 1000);
+        setTimeout(()=>{
+            window.location.href=`/admin/product-listing/${data.product_id}`;
+        },1000);
 
         targetForm.reset();
     })
-    .catch(() => {
-        loader.classList.add('hidden');
-        messageBox.innerHTML = 'Server error';
-        messageBox.classList.remove('hidden', 'bg-green-500');
-        messageBox.classList.add('bg-red-500');
+    .catch(()=>{
+        loader.classList.add('d-none');
+        showMessage('Server error','danger');
     });
 });
 </script>
 
-<style>
-.hidden { display: none; }
-#loader { margin: 5px 0; }
-.bg-red-500 { background-color: #f56565; }
-.bg-green-500 { background-color: #48bb78; }
-#formMessage { transition: all 0.3s; }
-</style>
 @endsection

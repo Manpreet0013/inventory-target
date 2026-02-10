@@ -3,73 +3,154 @@
 @section('title','Admin Dashboard')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
 
-    <!-- PAGE TITLE -->
-    <h1 class="text-2xl font-semibold text-gray-800 mb-6">
-        📊 Admin Overview Report
-    </h1>
+<div class="container-fluid py-4">
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <!-- TARGETS -->
+    <h5 class="mb-3 fw-semibold">🎯 Targets</h5>
 
-        <a href="{{ route('admin.list') }}"
-           class="block bg-blue-600 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Total Target</p>
-            <h2 class="text-3xl font-bold">{{ $totalTargets }}</h2>
-        </a>
+    <div class="row g-4 mb-4">
 
-        <a href="{{ route('admin.list', ['status' => 'current']) }}"
-           class="block bg-green-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Current</p>
-            <h2 class="text-3xl font-bold">{{ $currentTargets }}</h2>
-        </a>
+        <!-- Total -->
+        <div class="col-md-4">
+            <a href="{{ route('admin.list') }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <span class="material-icons">flag</span>
+                    </div>
 
-        <a href="{{ route('admin.list', ['status' => 'expired']) }}"
-           class="block bg-red-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Expired</p>
-            <h2 class="text-3xl font-bold">{{ $expiredTargets }}</h2>
-        </a>
+                    <div>
+                        <p>Total Targets</p>
+                        <h3>{{ $totalTargets }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    </div>
+        <!-- Current -->
+        <div class="col-md-4">
+            <a href="{{ route('admin.list',['status'=>'current']) }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <span class="material-icons">trending_up</span>
+                    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div>
+                        <p>Current Targets</p>
+                        <h3>{{ $currentTargets }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-        <a href="{{ route('admin.list', ['status' => 'achieved_full']) }}"
-           class="block bg-blue-600 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Achieved Fully</p>
-            <h2 class="text-3xl font-bold">{{ $achievedFully }}</h2>
-        </a>
+        <!-- Expired -->
+        <div class="col-md-4">
+            <a href="{{ route('admin.list',['status'=>'expired']) }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger">
+                        <span class="material-icons">event_busy</span>
+                    </div>
 
-        <a href="{{ route('admin.list', ['status' => 'achieved_partial']) }}"
-           class="block bg-yellow-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Achieved Partially</p>
-            <h2 class="text-3xl font-bold">{{ $achievedPartial }}</h2>
-        </a>
-
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <a href="{{ route('admin.products') }}"
-           class="block bg-blue-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Total Products</p>
-            <h2 class="text-3xl font-bold">{{ $totalProducts }}</h2>
-        </a>
-
-        <a href="{{ route('admin.products', ['target' => 'set']) }}"
-           class="block bg-green-600 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Target Set</p>
-            <h2 class="text-3xl font-bold">{{ $targetSetProducts }}</h2>
-        </a>
-
-        <a href="{{ route('admin.products', ['target' => 'not_set']) }}"
-           class="block bg-red-500 text-white p-4 rounded-xl hover:shadow-lg hover:scale-105 transition cursor-pointer">
-            <p>Target Not Set</p>
-            <h2 class="text-3xl font-bold">{{ $targetNotSetProducts }}</h2>
-        </a>
+                    <div>
+                        <p>Expired Targets</p>
+                        <h3>{{ $expiredTargets }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
 
     </div>
 
+    <!-- ACHIEVEMENTS -->
+    <h5 class="mb-3 fw-semibold">🏆 Achievements</h5>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-6">
+            <a href="{{ route('admin.list',['status'=>'achieved_full']) }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <span class="material-icons">emoji_events</span>
+                    </div>
+
+                    <div>
+                        <p>Achieved Fully</p>
+                        <h3>{{ $achievedFully }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6">
+            <!-- ✅ FIXED TAG -->
+            <a href="{{ route('admin.list',['status'=>'achieved_partial']) }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info">
+                        <span class="material-icons">military_tech</span>
+                    </div>
+
+                    <div>
+                        <p>Achieved Partially</p>
+                        <h3>{{ $achievedPartial }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- PRODUCTS -->
+    <h5 class="mb-3 fw-semibold">📦 Products</h5>
+
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <a href="{{ route('admin.products') }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <span class="material-icons">inventory_2</span>
+                    </div>
+
+                    <div>
+                        <p>Total Products</p>
+                        <h3>{{ $totalProducts }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('admin.products',['target'=>'set']) }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <span class="material-icons">check_circle</span>
+                    </div>
+
+                    <div>
+                        <p>Target Set</p>
+                        <h3>{{ $targetSetProducts }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('admin.products',['target'=>'not_set']) }}" class="card-link">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger">
+                        <span class="material-icons">cancel</span>
+                    </div>
+
+                    <div>
+                        <p>Target Not Set</p>
+                        <h3>{{ $targetNotSetProducts }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
 
 </div>
+
 @endsection

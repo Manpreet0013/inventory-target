@@ -3,52 +3,77 @@
 @section('title', 'Tracking IP Whitelist')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-6 py-6">
 
-    <h1 class="text-2xl font-semibold text-gray-800 mb-4">
-        🔐 Tracking IP Whitelist
-    </h1>
+<div class="container py-4">
 
+    <!-- PAGE TITLE -->
+    <div class="mb-4">
+        <h4 class="fw-bold">
+            🔐 Tracking IP Whitelist
+        </h4>
+        <p class="text-muted small mb-0">
+            Manage IP addresses allowed to access tracking system
+        </p>
+    </div>
+
+    <!-- SUCCESS ALERT -->
     @if(session('success'))
-        <div class="mb-4 bg-green-100 text-green-800 px-4 py-3 rounded">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.tracking.ips.update') }}">
-        @csrf
+    <!-- CARD -->
+    <div class="card shadow-sm border-0">
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                Allowed IP Addresses
-            </label>
+        <div class="card-body">
 
-            <textarea
-                name="allowed_ips"
-                rows="8"
-                class="w-full border rounded-lg px-4 py-2 focus:ring focus:ring-indigo-200"
-                placeholder="Example:
+            <form method="POST" action="{{ route('admin.tracking.ips.update') }}">
+                @csrf
+
+                <!-- TEXTAREA -->
+                <div class="mb-3">
+
+                    <label class="form-label fw-semibold">
+                        Allowed IP Addresses
+                    </label>
+
+                    <textarea
+                        name="allowed_ips"
+                        rows="8"
+                        class="form-control"
+                        placeholder="Example:
 127.0.0.1
 192.168.1.1
 103.21.244.0"
-            >{{ old('allowed_ips', $allowedIps) }}</textarea>
+                    >{{ old('allowed_ips', $allowedIps) }}</textarea>
 
-            <p class="mt-2 text-sm text-gray-500">
-                Enter one IP address per line.
-            </p>
+                    <div class="form-text">
+                        Enter one IP address per line.
+                    </div>
 
-            @error('allowed_ips')
-                <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
-            @enderror
+                    @error('allowed_ips')
+                        <div class="text-danger small mt-1">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                </div>
+
+                <!-- BUTTON -->
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        💾 Save IPs
+                    </button>
+                </div>
+
+            </form>
+
         </div>
 
-        <button
-            type="submit"
-            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
-        >
-            Save IPs
-        </button>
-    </form>
+    </div>
 
 </div>
+
 @endsection

@@ -3,31 +3,115 @@
 @section('title', 'User Profile')
 
 @section('content')
-<div class="container mx-auto mt-6">
-    <div class="bg-white shadow-md rounded px-6 py-6">
-        <h1 class="text-2xl font-bold mb-4">User Profile</h1>
+<div class="container-fluid py-4">
 
-        <div class="mb-4">
-            <p><span class="font-semibold">Name:</span> {{ $user->name }}</p>
-            <p><span class="font-semibold">Email:</span> {{ $user->email }}</p>
-            <p><span class="font-semibold">Role(s):</span> {{ $user->roles->pluck('name')->join(', ') }}</p>
-            <p><span class="font-semibold">Company:</span> {{ $user->company?->name ?? '-' }}</p>
-            <p><span class="font-semibold">Created At:</span> {{ $user->created_at->format('d M, Y H:i') }}</p>
-            @if($user->updated_at)
-                <p><span class="font-semibold">Last Updated:</span> {{ $user->updated_at->format('d M, Y H:i') }}</p>
-            @endif
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">User Profile</h3>
+            <small class="text-muted">User details overview</small>
         </div>
 
-        <div class="flex gap-3 mt-4">
-            <a href="{{ route('admin.users.index') }}" 
-               class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition">
-                Back to Users
-            </a>
-            <a href="{{ route('admin.users.edit', $user->id) }}" 
-               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                Edit User
-            </a>
+        <a href="{{ route('admin.users.index') }}"
+           class="btn btn-secondary shadow-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-body p-4">
+
+            <div class="row">
+
+                <!-- Left: Avatar -->
+                <!-- Left: Avatar -->
+<div class="col-md-3 d-flex flex-column align-items-center justify-content-center text-center border-end py-4">
+
+    <!-- Avatar -->
+    <div class="mb-3">
+        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=0D8ABC&color=fff&size=120"
+             class="rounded-circle shadow"
+             alt="User Avatar">
+    </div>
+
+    <!-- Name -->
+    <h5 class="fw-bold mb-1">{{ $user->name }}</h5>
+
+    <!-- Role -->
+    <small class="text-muted">
+        {{ $user->roles->pluck('name')->join(', ') }}
+    </small>
+
+</div>
+
+
+                <!-- Right: Details -->
+                <div class="col-md-9">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <small class="text-muted">Email</small>
+                                <div class="fw-semibold">
+                                    {{ $user->email }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <small class="text-muted">Company</small>
+                                <div class="fw-semibold">
+                                    {{ $user->company?->name ?? '-' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <small class="text-muted">Created At</small>
+                                <div class="fw-semibold">
+                                    {{ $user->created_at->format('d M, Y H:i') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        @if($user->updated_at)
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <small class="text-muted">Last Updated</small>
+                                <div class="fw-semibold">
+                                    {{ $user->updated_at->format('d M, Y H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="mt-4 d-flex gap-2">
+
+                        <a href="{{ route('admin.users.edit', $user->id) }}"
+                           class="btn btn-primary shadow-sm">
+                            <i class="bi bi-pencil-square"></i> Edit User
+                        </a>
+
+                        <a href="{{ route('admin.users.index') }}"
+                           class="btn btn-outline-secondary">
+                            Back to Users
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
     </div>
+
 </div>
 @endsection

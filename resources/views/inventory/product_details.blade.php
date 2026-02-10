@@ -4,207 +4,328 @@
 
 @section('content')
 
-<div class="p-4">
+<div class="container py-4">
 
-    {{-- BACK --}}
+    <!-- BACK BUTTON -->
     <a href="{{ url()->previous() }}"
-       class="inline-block mb-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+       class="btn btn-secondary mb-3">
         ← Back
     </a>
 
-    {{-- PRODUCT INFO --}}
-    <div class="bg-white rounded shadow p-4 mb-6 flex gap-4">
-        <div class="w-40 h-40">
-            @if($product->image)
-                <img src="{{ asset('storage/'.$product->image) }}"
-                     class="w-full h-full object-cover rounded">
-            @else
-                <div class="w-full h-full bg-gray-200 flex items-center justify-center rounded text-gray-500">
-                    No Image
-                </div>
-            @endif
-        </div>
 
-        <div>
-            <h1 class="text-2xl font-bold mb-2">{{ $product->name }}</h1>
-            <p><b>Composition:</b> {{ $product->composition ?? '-' }}</p>
-            <p><b>Type:</b> {{ ucfirst($product->type) }}</p>
-            <p><b>Expiry Date:</b> {{ $product->expiry_date ?? '-' }}</p>
+    <!-- PRODUCT INFO CARD -->
+    <div class="card shadow-sm mb-4 border-0">
+
+        <div class="card-body d-flex flex-wrap gap-4">
+
+            <!-- IMAGE -->
+            <div style="width:160px;height:160px;">
+                @if($product->image)
+                    <img src="{{ asset('storage/'.$product->image) }}"
+                         class="img-fluid rounded h-100 w-100 object-fit-cover">
+                @else
+                    <div class="bg-light border rounded d-flex align-items-center justify-content-center h-100">
+                        <small class="text-muted">No Image</small>
+                    </div>
+                @endif
+            </div>
+
+            <!-- DETAILS -->
+            <div>
+                <h4 class="fw-bold mb-2">{{ $product->name }}</h4>
+
+                <p class="mb-1">
+                    <strong>Composition:</strong>
+                    {{ $product->composition ?? '-' }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Type:</strong>
+                    {{ ucfirst($product->type) }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>Expiry Date:</strong>
+                    {{ $product->expiry_date ?? '-' }}
+                </p>
+            </div>
+
         </div>
     </div>
 
-    {{-- TARGETS --}}
-    <h2 class="text-xl font-semibold mb-3">Targets & Sales</h2>
 
-    @forelse($product->targets->whereNull('parent_id') as $target)
 
-        @php
-            $achieved = $target->target_type === 'box'
-                ? $target->sales->sum('boxes_sold')
-                : $target->sales->sum('amount');
-            $remaining  = max($target->target_value - $achieved, 0);
-            $percentage = $target->target_value > 0
-                ? round(($achieved / $target->target_value) * 100)
-                : 0;
-        @endphp
+    <!-- TARGET HEADING -->
+    <h5 class="fw-bold mb-3">Targets & Sales</h5>
 
-        {{-- PARENT TARGET CARD --}}
-        <div class="bg-white rounded shadow p-4 mb-4 border-l-4 border-blue-500">
-            <div class="flex justify-between flex-wrap gap-4">
-                <div>
-                    <p><b>Executive:</b>
-                        <span class="px-2 py-1 rounded bg-yellow-500 text-white text-xs">
-                            {{ $target->executive->name ?? '-' }}
-                        </span>
-                    </p>
-                    <p><b>Target:</b> {{ $target->target_value }} ({{ ucfirst($target->target_type) }})</p>
-                    <p><b>Duration:</b> {{ $target->start_date }} → {{ $target->end_date }}</p>
-                </div>
 
-                <div class="w-64">
-                    <div class="text-xs mb-1">
-                        {{ $achieved }} achieved / {{ $remaining }} remaining
-                    </div>
-                    <div class="w-full bg-gray-200 rounded h-2">
-                        <div
-                            class="h-2 rounded {{ $percentage >= 100 ? 'bg-green-600' : 'bg-blue-500' }}"
-                            style="width: {{ min($percentage,100) }}%">
-                        </div>
-                    </div>
-                    <div class="text-xs mt-1 {{ $percentage >= 100 ? 'text-green-700' : 'text-gray-700' }}">
-                        {{ $percentage }}%
-                    </div>
-                </div>
+@forelse($product->targets->whereNull('parent_id') as $target)
+
+@php
+    $achieved = $target->target_type === 'box'
+        ? $target->sales->sum('boxes_sold')
+        : $target->sales->sum('amount');
+
+    $remaining  = max($target->target_value - $achieved, 0);
+
+    $percentage = $target->target_value > 0
+        ? round(($achieved / $target->target_value) * 100)
+        : 0;
+@endphp
+
+
+<!-- ================= PARENT TARGET CARD ================= -->
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <div class="row g-3 align-items-center">
+
+            <!-- TARGET INFO -->
+            <div class="col-md-7">
+
+                <p class="mb-1">
+                    <strong>Executive:</strong>
+                    <span class="badge bg-warning text-dark">
+                        {{ $target->executive->name ?? '-' }}
+                    </span>
+                </p>
+
+                <p class="mb-1">
+                    <strong>Target:</strong>
+                    {{ $target->target_value }}
+                    ({{ ucfirst($target->target_type) }})
+                </p>
+
+                <p class="mb-0">
+                    <strong>Duration:</strong>
+                    {{ $target->start_date }} → {{ $target->end_date }}
+                </p>
+
             </div>
 
-            {{-- CHILD TARGETS --}}
-            @if($target->children->count())
-                <div class="ml-6 mt-4 border-l-2 border-gray-300 pl-4">
-                    <h4 class="text-sm font-semibold mb-2">Child Targets</h4>
 
-                    @foreach($target->children as $child)
-                        @php
-                            $childAchieved = $child->target_type === 'box'
-                                ? $child->sales->sum('boxes_sold')
-                                : $child->sales->sum('amount');
-                            $childRemaining  = max($child->target_value - $childAchieved, 0);
-                            $childPercentage = $child->target_value > 0
-                                ? round(($childAchieved / $child->target_value) * 100)
-                                : 0;
-                        @endphp
+            <!-- PROGRESS -->
+            <div class="col-md-5">
 
-                        <div class="bg-gray-50 rounded p-3 mb-3 border-l-4 border-purple-500">
-                            <div class="flex justify-between flex-wrap gap-4 text-sm">
-                                <div>
-                                    <p><b>Executive:</b>
-                                        <span class="px-2 py-1 rounded bg-indigo-500 text-white text-xs">
-                                            {{ $child->executive->name ?? '-' }}
-                                        </span>
-                                    </p>
-                                    <p><b>Target:</b> {{ $child->target_value }} ({{ ucfirst($child->target_type) }})</p>
-                                    <p><b>Status:</b> {{ ucfirst($child->status) }}</p>
-                                </div>
+                <small>
+                    {{ $achieved }} achieved /
+                    {{ $remaining }} remaining
+                </small>
 
-                                <div class="w-48">
-                                    <div class="text-xs mb-1">
-                                        {{ $childAchieved }} achieved / {{ $childRemaining }} remaining
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded h-2">
-                                        <div
-                                            class="h-2 rounded {{ $childPercentage >= 100 ? 'bg-green-600' : 'bg-purple-500' }}"
-                                            style="width: {{ min($childPercentage,100) }}%">
-                                        </div>
-                                    </div>
-                                    <div class="text-xs mt-1 {{ $childPercentage >= 100 ? 'text-green-700' : 'text-gray-700' }}">
-                                        {{ $childPercentage }}%
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- SALES --}}
-                            @if($child->sales->count())
-                                <div class="mt-3">
-                                    <h5 class="text-xs font-semibold mb-1">Sales</h5>
-                                    <table class="w-full text-xs border">
-                                        <thead class="bg-gray-100">
-                                            <tr>
-                                                <th class="border px-2 py-1">#</th>
-                                                <th class="border px-2 py-1">Party</th>
-                                                <th class="border px-2 py-1">Value</th>
-                                                <th class="border px-2 py-1">Date</th>
-                                                <th class="border px-2 py-1">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($child->sales as $cIndex => $sale)
-                                                <tr class="hover:bg-gray-50">
-                                                    <td class="border px-2 py-1">{{ $cIndex + 1 }}</td>
-                                                    <td class="border px-2 py-1">{{ $sale->party_name }}</td>
-                                                    <td class="border px-2 py-1">{{ $sale->boxes_sold ?? $sale->amount }}</td>
-                                                    <td class="border px-2 py-1">{{ $sale->sale_date }}</td>
-                                                    <td class="border px-2 py-1">
-                                                        <span class="px-2 py-0.5 rounded text-xs
-                                                            {{ $sale->status === 'accepted' ? 'bg-green-200 text-green-800' :
-                                                               ($sale->status === 'pending' ? 'bg-yellow-200 text-yellow-800' : 'bg-red-200 text-red-800') }}">
-                                                            {{ ucfirst($sale->status) }}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @else
-                                <div class="mt-2 text-xs bg-yellow-100 p-2 rounded">
-                                    No sales added yet.
-                                </div>
-                            @endif
-
-                        </div>
-                    @endforeach
+                <div class="progress mt-1" style="height:8px;">
+                    <div class="progress-bar
+                        {{ $percentage >= 100 ? 'bg-success' : 'bg-primary' }}"
+                        style="width: {{ min($percentage,100) }}%">
+                    </div>
                 </div>
-            @endif
 
-            {{-- PARENT SALES --}}
-            @if($target->sales->count())
-                <div class="mt-4">
-                    <h4 class="text-sm font-semibold mb-2">Parent Sales</h4>
-                    <table class="w-full text-xs border">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="border px-2 py-1">#</th>
-                                <th class="border px-2 py-1">Party</th>
-                                <th class="border px-2 py-1">Value</th>
-                                <th class="border px-2 py-1">Date</th>
-                                <th class="border px-2 py-1">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($target->sales as $pIndex => $sale)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="border px-2 py-1">{{ $pIndex + 1 }}</td>
-                                    <td class="border px-2 py-1">{{ $sale->party_name }}</td>
-                                    <td class="border px-2 py-1">{{ $sale->boxes_sold ?? $sale->amount }}</td>
-                                    <td class="border px-2 py-1">{{ $sale->sale_date }}</td>
-                                    <td class="border px-2 py-1">
-                                        <span class="px-2 py-0.5 rounded text-xs
-                                            {{ $sale->status === 'accepted' ? 'bg-green-200 text-green-800' :
-                                               ($sale->status === 'pending' ? 'bg-yellow-200 text-yellow-800' : 'bg-red-200 text-red-800') }}">
-                                            {{ ucfirst($sale->status) }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
+                <small class="fw-semibold">
+                    {{ $percentage }}%
+                </small>
+
+            </div>
 
         </div>
 
-    @empty
-        <p class="text-gray-500">No targets available.</p>
-    @endforelse
+
+
+        <!-- ================= CHILD TARGETS ================= -->
+
+        @if($target->children->count())
+
+        <div class="mt-4 ps-3 border-start">
+
+            <h6 class="fw-bold mb-3">Child Targets</h6>
+
+            @foreach($target->children as $child)
+
+            @php
+                $childAchieved = $child->target_type === 'box'
+                    ? $child->sales->sum('boxes_sold')
+                    : $child->sales->sum('amount');
+
+                $childRemaining  = max($child->target_value - $childAchieved, 0);
+
+                $childPercentage = $child->target_value > 0
+                    ? round(($childAchieved / $child->target_value) * 100)
+                    : 0;
+            @endphp
+
+
+            <div class="card bg-light border-0 mb-3">
+
+                <div class="card-body p-3">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-7 small">
+
+                            <p class="mb-1">
+                                <strong>Executive:</strong>
+                                <span class="badge bg-info">
+                                    {{ $child->executive->name ?? '-' }}
+                                </span>
+                            </p>
+
+                            <p class="mb-1">
+                                <strong>Target:</strong>
+                                {{ $child->target_value }}
+                                ({{ ucfirst($child->target_type) }})
+                            </p>
+
+                            <p class="mb-0">
+                                <strong>Status:</strong>
+                                {{ ucfirst($child->status) }}
+                            </p>
+
+                        </div>
+
+
+                        <!-- CHILD PROGRESS -->
+                        <div class="col-md-5">
+
+                            <small>
+                                {{ $childAchieved }} achieved /
+                                {{ $childRemaining }} remaining
+                            </small>
+
+                            <div class="progress mt-1" style="height:6px;">
+                                <div class="progress-bar
+                                    {{ $childPercentage >= 100 ? 'bg-success' : 'bg-purple' }}"
+                                    style="width: {{ min($childPercentage,100) }}%">
+                                </div>
+                            </div>
+
+                            <small>{{ $childPercentage }}%</small>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- CHILD SALES TABLE -->
+                    @if($child->sales->count())
+
+                    <div class="table-responsive mt-3">
+
+                        <table class="table table-sm table-bordered align-middle">
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Party</th>
+                                    <th>Value</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                            @foreach($child->sales as $i => $sale)
+
+                                <tr>
+                                    <td>{{ $i+1 }}</td>
+                                    <td>{{ $sale->party_name }}</td>
+                                    <td>{{ $sale->boxes_sold ?? $sale->amount }}</td>
+                                    <td>{{ $sale->sale_date }}</td>
+                                    <td>
+
+                                        <span class="badge
+                                            {{ $sale->status=='accepted' ? 'bg-success' :
+                                               ($sale->status=='pending' ? 'bg-warning text-dark' : 'bg-danger') }}">
+                                            {{ ucfirst($sale->status) }}
+                                        </span>
+
+                                    </td>
+                                </tr>
+
+                            @endforeach
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @else
+                        <div class="alert alert-warning py-2 mt-2 small">
+                            No sales added yet.
+                        </div>
+                    @endif
+
+                </div>
+            </div>
+
+            @endforeach
+
+        </div>
+        @endif
+
+
+
+        <!-- ================= PARENT SALES ================= -->
+
+        @if($target->sales->count())
+
+        <div class="mt-4">
+
+            <h6 class="fw-bold mb-2">Parent Sales</h6>
+
+            <div class="table-responsive">
+
+                <table class="table table-sm table-bordered">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Party</th>
+                            <th>Value</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach($target->sales as $i => $sale)
+
+                        <tr>
+                            <td>{{ $i+1 }}</td>
+                            <td>{{ $sale->party_name }}</td>
+                            <td>{{ $sale->boxes_sold ?? $sale->amount }}</td>
+                            <td>{{ $sale->sale_date }}</td>
+                            <td>
+
+                                <span class="badge
+                                    {{ $sale->status=='accepted' ? 'bg-success' :
+                                       ($sale->status=='pending' ? 'bg-warning text-dark' : 'bg-danger') }}">
+                                    {{ ucfirst($sale->status) }}
+                                </span>
+
+                            </td>
+                        </tr>
+
+                    @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+
+        @endif
+
+    </div>
+</div>
+
+@empty
+    <div class="alert alert-info">
+        No targets available.
+    </div>
+@endforelse
 
 </div>
 

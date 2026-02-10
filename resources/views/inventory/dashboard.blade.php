@@ -4,122 +4,220 @@
 
 @section('content')
 
-<div class="justify-between items-center mb-6">
-    <h1 class="text-2xl font-semibold">Expiring Products</h1>
-    <br>
-    {{-- Add Target Button --}}
-    <button
-        onclick="openProductModal()"
-        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
-        + Add Target
-    </button>
-    <a
-        href="{{ route('target.list') }}"
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-green-700 transition">
-        View Targets
-    </a>
-</div>
+<div class="container py-4">
 
-<div class="bg-white rounded shadow overflow-x-auto">
-    <table class="w-full text-sm">
-        <thead class="bg-gray-100 text-gray-700">
-            <tr>
-                <th class="px-4 py-2 text-left">Product</th>
-                <th class="px-4 py-2">Expiry Date</th>
-                <th class="px-4 py-2">Days Left</th>
-                <th class="px-4 py-2 text-right">Action</th>
-            </tr>
-        </thead>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h4 class="fw-bold mb-0">Expiring Products</h4>
 
-        <tbody>
-        @forelse($products as $product)
-            @php
-                $expiry = \Carbon\Carbon::parse($product->expiry_date);
-                $daysLeft = $expiry->isPast() ? 0 : $expiry->diffInDays(now());
-                $isExpiring = !$expiry->isPast() && $daysLeft <= 180;
-            @endphp
+        <div class="d-flex gap-2">
+            <button onclick="openProductModal()"
+                class="btn btn-success">
+                + Add Target
+            </button>
 
-            <tr class="border-t hover:bg-gray-50">
-                <td class="px-4 py-2 font-medium">{{ $product->name }}</td>
-                <td class="px-4 py-2">{{ $expiry->format('d M Y') }}</td>
-                <td class="px-4 py-2">
-                    <span class="px-2 py-1 text-xs rounded
-                        {{ $expiry->isPast() ? 'bg-red-200 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
-                        {{ $expiry->isPast() ? 'Expired' : $daysLeft . ' days left' }}
-                    </span>
-                </td>
-                <td class="px-4 py-2 text-right">
-                    @if(!$product->notified_at && $isExpiring)
-                        <button
-                            onclick="notifyAdmin({{ $product->id }})"
-                            class="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition">
-                            Notify Admin
-                        </button>
-                    @elseif($product->notified_at)
-                        <span class="text-xs text-green-600 font-semibold">Notified</span>
-                    @else
-                        <span class="text-xs text-gray-500">Not expiring soon</span>
-                    @endif
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="4" class="text-center py-6 text-gray-500">
-                    No expiring products found 🎉
-                </td>
-            </tr>
-        @endforelse
-        </tbody>
-    </table>
-</div>
+            <a href="{{ route('target.list') }}"
+               class="btn btn-primary">
+               View Targets
+            </a>
+        </div>
+    </div>
 
-<div class="mt-4">
-    {{ $products->links('pagination::tailwind') }}
-</div>
+    <!-- TABLE CARD -->
+    <div class="card shadow-sm border-0">
 
-{{-- Add Product Modal --}}
-<div id="productModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
-    <div class="bg-white rounded shadow-lg w-full max-w-md p-6 relative">
-        <h2 class="text-xl font-semibold mb-4">Add New Product</h2>
+        <div class="card-body p-0">
 
-        <form id="productForm" enctype="multipart/form-data">
-            @csrf
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
 
-            <label class="block mb-1 text-sm font-medium">Product Name</label>
-            <input type="text" name="name" placeholder="Enter product name"
-                   class="w-full border px-3 py-2 rounded mb-3" required>
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Expiry Date</th>
+                            <th>Days Left</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
 
-            <label class="block mb-1 text-sm font-medium">Product Image</label>
-            <input type="file" name="image" class="w-full mb-3" accept="image/*">
+                    <tbody>
+                    @forelse($products as $product)
 
-            <label class="block mb-1 text-sm font-medium">Expiry Date</label>
-            <input type="date" name="expiry_date" class="w-full border px-3 py-2 mb-3 rounded">
+                        @php
+                            $expiry = \Carbon\Carbon::parse($product->expiry_date);
+                            $daysLeft = $expiry->isPast() ? 0 : $expiry->diffInDays(now());
+                            $isExpiring = !$expiry->isPast() && $daysLeft <= 180;
+                        @endphp
 
-            <label class="block mb-1 text-sm font-medium">Composition</label>
-            <input type="text" name="composition" placeholder="Enter composition"
-                   class="w-full border px-3 py-2 mb-3 rounded">
+                        <tr>
 
-            <label class="block mb-1 text-sm font-medium">Type</label>
-            <select name="type" class="border w-full px-3 py-2 mb-3 rounded" required>
-                <option value="expiry">Expiry</option>
-                <option value="new">New</option>
-            </select>
+                            <td class="fw-semibold">
+                                {{ $product->name }}
+                            </td>
 
-            <div class="flex justify-end space-x-2">
-                <button type="button" onclick="closeProductModal()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Add Product</button>
+                            <td>
+                                {{ $expiry->format('d M Y') }}
+                            </td>
+
+                            <td>
+                                @if($expiry->isPast())
+                                    <span class="badge bg-danger">
+                                        Expired
+                                    </span>
+                                @else
+                                    <span class="badge bg-warning text-dark">
+                                        {{ $daysLeft }} days left
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td class="text-end">
+
+                                @if(!$product->notified_at && $isExpiring)
+
+                                    <button
+                                        onclick="notifyAdmin({{ $product->id }})"
+                                        class="btn btn-sm btn-danger">
+                                        Notify Admin
+                                    </button>
+
+                                @elseif($product->notified_at)
+
+                                    <span class="badge bg-success">
+                                        Notified
+                                    </span>
+
+                                @else
+
+                                    <span class="text-muted small">
+                                        Not expiring soon
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                No expiring products found 🎉
+                            </td>
+                        </tr>
+
+                    @endforelse
+                    </tbody>
+
+                </table>
             </div>
 
-            <p id="modalMessage" class="text-xs mt-2"></p>
-        </form>
+        </div>
+    </div>
 
+    <!-- PAGINATION -->
+    <div class="mt-3">
+        {{ $products->links('pagination::bootstrap-5') }}
+    </div>
+
+</div>
+
+
+<!-- ================= MODAL ================= -->
+
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Product</h5>
+                <button type="button" class="btn-close" onclick="closeProductModal()"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <form id="productForm" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="mb-3">
+                        <label class="form-label">Product Name</label>
+                        <input type="text" name="name"
+                               class="form-control"
+                               placeholder="Enter product name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Product Image</label>
+                        <input type="file" name="image"
+                               class="form-control"
+                               accept="image/*">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="date" name="expiry_date"
+                               class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Composition</label>
+                        <input type="text" name="composition"
+                               class="form-control"
+                               placeholder="Enter composition">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="type" class="form-select">
+                            <option value="expiry">Expiry</option>
+                            <option value="new">New</option>
+                        </select>
+                    </div>
+
+                    <p id="modalMessage" class="small"></p>
+
+                    <div class="text-end">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                onclick="closeProductModal()">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            Add Product
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
     </div>
 </div>
 
 
-{{-- JS --}}
+<!-- ================= JS ================= -->
+
 <script>
+
+// Bootstrap modal instance
+let productModal = new bootstrap.Modal(document.getElementById('productModal'));
+
+function openProductModal() {
+    productModal.show();
+}
+
+function closeProductModal() {
+    productModal.hide();
+}
+
+
+// Notify Admin
 function notifyAdmin(productId) {
+
     fetch(`/inventory/notify-admin/${productId}`, {
         method: 'POST',
         headers: {
@@ -135,20 +233,14 @@ function notifyAdmin(productId) {
     .catch(() => {
         alert('Something went wrong!');
     });
+
 }
 
-// Open/Close modal
-function openProductModal() {
-    document.getElementById('productModal').classList.remove('hidden');
-    document.getElementById('productModal').classList.add('flex');
-}
-function closeProductModal() {
-    document.getElementById('productModal').classList.remove('flex');
-    document.getElementById('productModal').classList.add('hidden');
-}
 
-// Submit product via AJAX
-document.getElementById('productForm').addEventListener('submit', function(e){
+// Submit Product AJAX
+document.getElementById('productForm')
+.addEventListener('submit', function(e){
+
     e.preventDefault();
 
     const form = this;
@@ -162,40 +254,32 @@ document.getElementById('productForm').addEventListener('submit', function(e){
         body: formData
     })
     .then(async res => {
-    let data;
-    try {
-        data = await res.json();
-    } catch(e) {
-        console.error('Invalid JSON from server', e);
-        data = {success:false, message:'Invalid server response'};
-    }
 
-    console.log(data); // <- now you'll see actual error
+        let data = await res.json();
 
-    if(!res.ok){
-        message.textContent = data.message || 'Server error occurred!';
-        message.className = 'text-red-600 mt-2';
-        return;
-    }
+        if(!res.ok){
+            message.textContent = data.message || 'Server error!';
+            message.className = 'text-danger small';
+            return;
+        }
 
-    if(data.success){
-        message.textContent = data.message;
-        message.className = 'text-green-600 mt-2';
-        setTimeout(() => location.reload(), 1200);
-    } else {
-        message.textContent = data.message || 'Error occurred';
-        message.className = 'text-red-600 mt-2';
-    }
-})
+        if(data.success){
+            message.textContent = data.message;
+            message.className = 'text-success small';
+            setTimeout(()=>location.reload(),1200);
+        }
+        else{
+            message.textContent = data.message || 'Error!';
+            message.className = 'text-danger small';
+        }
 
-    .catch(err => {
-        // Network or unexpected JS error
-        console.error('Fetch failed:', err);
+    })
+    .catch(()=>{
         message.textContent = 'Something went wrong!';
-        message.className = 'text-red-600 mt-2';
+        message.className = 'text-danger small';
     });
-});
 
+});
 </script>
 
 @endsection

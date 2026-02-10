@@ -3,137 +3,181 @@
 @section('title','Products Listing')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="container-fluid py-4">
 
     <!-- HEADER -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">
-            📦 Products
-        </h1>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+
+        <h4 class="mb-0 fw-bold text-dark">
+            📦 Products Listing
+        </h4>
 
         <a href="{{ route('admin.add-product') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow">
+           class="btn btn-primary shadow-sm">
             + Create New Product
         </a>
     </div>
 
     <!-- TABLE CARD -->
-    <div class="bg-white rounded-xl shadow overflow-x-auto">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                <tr>
-                    <th class="px-4 py-3">#</th>
-                    <th class="px-4 py-3">Product</th>
-                    <th class="px-4 py-3">Image</th>
-                    <th class="px-4 py-3">Composition</th>
-                    <th class="px-4 py-3">Type</th>
-                    <th class="px-4 py-3">Expiry</th>
-                    <th class="px-4 py-3 text-center">Targets</th>
-                    <th class="px-4 py-3 text-center">Status</th>
-                    <th class="px-4 py-3 text-center">Actions</th>
-                </tr>
-            </thead>
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
 
-            <tbody class="divide-y">
-                @forelse($products as $index => $product)
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-4 py-3 font-medium">
-                        {{ $index + 1 }}
-                    </td>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
 
-                    <td class="px-4 py-3 font-semibold text-gray-800">
-                        {{ $product->name }}
-                    </td>
+                    <!-- TABLE HEAD -->
+                    <thead class="table-light text-uppercase small">
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Image</th>
+                            <th>Composition</th>
+                            <th>Type</th>
+                            <th>Expiry</th>
+                            <th class="text-center">Targets</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
 
-                    <td class="px-4 py-3">
-                        @if($product->image)
-                            <img src="{{ asset('storage/'.$product->image) }}"
-                                 class="w-12 h-12 rounded object-cover" width="100px">
-                        @else
-                            <span class="text-gray-400 italic">No Image</span>
-                        @endif
-                    </td>
+                    <!-- TABLE BODY -->
+                    <tbody>
+                        @forelse($products as $index => $product)
+                        <tr>
 
-                    <td class="px-4 py-3">
-                        {{ $product->composition ?? '-' }}
-                    </td>
+                            <!-- Index -->
+                            <td class="fw-semibold">
+                                {{ $index + 1 }}
+                            </td>
 
-                    <td class="px-4 py-3 capitalize">
-                        {{ $product->type }}
-                    </td>
+                            <!-- Product Name -->
+                            <td class="fw-bold text-dark">
+                                {{ $product->name }}
+                            </td>
 
-                    <td class="px-4 py-3 text-gray-600">
-                        {{ $product->expiry_date ?? '-' }}
-                    </td>
+                            <!-- Image -->
+                            <td>
+                                @if($product->image)
+                                    <img src="{{ asset('storage/'.$product->image) }}"
+                                         width="50"
+                                         height="50"
+                                         class="rounded border object-fit-cover">
+                                @else
+                                    <span class="text-muted fst-italic">
+                                        No Image
+                                    </span>
+                                @endif
+                            </td>
 
-                    <td class="px-4 py-3 text-center font-semibold">
-                        {{ $product->targets()->whereNull('parent_id')->count() }}
-                    </td>
+                            <!-- Composition -->
+                            <td>
+                                {{ $product->composition ?? '-' }}
+                            </td>
 
-                    <td class="px-4 py-3 text-center">
-                        @if($product->targets->count())
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                {{ $product->isTargetCompleted()
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700' }}">
-                                {{ $product->isTargetCompleted() ? 'Completed' : 'Incomplete' }}
-                            </span>
-                        @else
-                            <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs">
-                                No Targets
-                            </span>
-                        @endif
-                    </td>
+                            <!-- Type -->
+                            <td>
+                                @if($product->type === 'new')
+                                    <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                                        New Launch
+                                    </span>
+                                @else
+                                    <span class="badge bg-warning-subtle text-warning px-3 py-2">
+                                        Expiry
+                                    </span>
+                                @endif
+                            </td>
 
-                    @php
-                        $parentTarget = $product->targets->whereNull('parent_id')->first();
-                        $parentTargetCount = $parentTarget ? 1 : 0;
-                    @endphp
-                    
-                    <td class="px-4 py-3 text-center space-x-2">
+                            <!-- Expiry -->
+                            <td class="text-muted">
+                                {{ $product->expiry_date ?? '-' }}
+                            </td>
 
-                        <!-- View Button -->
-                        <a href="{{ route('admin.products.details', $product->id) }}"
-                           class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs">
-                            View
-                        </a>
+                            <!-- Targets Count -->
+                            <td class="text-center fw-semibold">
+                                {{ $product->targets()->whereNull('parent_id')->count() }}
+                            </td>
 
-                        @if ($parentTargetCount === 0)
-                            <!-- Add Button -->
-                            <a href="{{ route('admin.targets', ['product_id' => $product->id]) }}"
-                               class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs">
-                                Add
-                            </a>
-                        @endif
+                            <!-- Status -->
+                            <td class="text-center">
+                                @if($product->targets->count())
 
-                        @if ($parentTargetCount === 1)
-                            <!-- Delete Target -->
-                            <form action="{{ route('admin.product.destroy', $product->id) }}"
-                                  method="POST"
-                                  class="inline">
-                                @csrf
-                                @method('DELETE')
+                                    @if($product->isTargetCompleted())
+                                        <span class="badge bg-success-subtle text-success px-3 py-2">
+                                            Completed
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger px-3 py-2">
+                                            Incomplete
+                                        </span>
+                                    @endif
 
-                                <button type="submit"
-                                    onclick="return confirm('Are you sure you want to delete this target?')"
-                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs">
-                                    Delete
-                                </button>
-                            </form>
-                        @endif
+                                @else
+                                    <span class="badge bg-secondary-subtle text-secondary px-3 py-2">
+                                        No Targets
+                                    </span>
+                                @endif
+                            </td>
 
-                    </td>
+                            @php
+                                $parentTarget = $product->targets->whereNull('parent_id')->first();
+                                $parentTargetCount = $parentTarget ? 1 : 0;
+                            @endphp
 
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="9" class="text-center py-6 text-gray-500">
-                        No products found
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            <!-- Actions -->
+                            <td class="text-center">
+
+                                <div class="d-flex justify-content-center gap-2 flex-wrap">
+
+                                    <!-- View -->
+                                    <a href="{{ route('admin.products.details', $product->id) }}"
+                                       class="btn btn-sm btn-primary">
+                                        View
+                                    </a>
+
+                                    <!-- Add Target -->
+                                    @if ($parentTargetCount === 0)
+                                        <a href="{{ route('admin.targets', ['product_id' => $product->id]) }}"
+                                           class="btn btn-sm btn-success">
+                                            Add
+                                        </a>
+                                    @endif
+
+                                    <!-- Delete -->
+                                    @if ($parentTargetCount === 1)
+                                        <form action="{{ route('admin.product.destroy', $product->id) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-danger">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                        @empty
+
+                        <!-- No Data -->
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                No products found
+                            </td>
+                        </tr>
+
+                        @endforelse
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
     </div>
 
 </div>

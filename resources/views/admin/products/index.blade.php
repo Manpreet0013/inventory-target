@@ -3,82 +3,147 @@
 @section('title','Create Product')
 
 @section('content')
-<div class="container mx-auto mt-6 ">
-    <div class="bg-white shadow-md rounded px-6 py-6">
 
-        <!-- Message Box -->
-        <div id="formMessage" class="p-3 rounded text-white hidden mb-4"></div>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
 
-        <form id="productForm" enctype="multipart/form-data" class="space-y-4">
-            @csrf
+            <!-- Card -->
+            <div class="card shadow-lg border-0 rounded-4">
 
-            <div>
-                <label for="name" class="block font-semibold mb-1">Product Name</label>
-                <input type="text" name="name" id="name" class="w-full border rounded px-3 py-2" placeholder="Product Name" required>
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <h5 class="mb-0">Create Product</h5>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body p-4">
+
+                    <!-- Message Box -->
+                    <div id="formMessage" class="alert d-none"></div>
+
+                    <form id="productForm" enctype="multipart/form-data">
+                        @csrf
+
+                        <!-- Product Name -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Product Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="name"
+                                   class="form-control"
+                                   placeholder="Enter product name"
+                                   required>
+                        </div>
+
+                        <!-- Composition -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Composition
+                            </label>
+                            <textarea name="composition"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Enter composition"></textarea>
+                        </div>
+
+                        <!-- Product Type -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Product Type
+                            </label>
+                            <select name="type"
+                                    id="productType"
+                                    class="form-select">
+                                <option value="expiry">Expiry Product</option>
+                                <option value="new">New Launch</option>
+                            </select>
+                        </div>
+
+                        <!-- Image -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Product Image
+                            </label>
+                            <input type="file"
+                                   name="image"
+                                   accept="image/*"
+                                   class="form-control">
+                        </div>
+
+                        <!-- Expiry Date -->
+                        <div class="mb-3" id="expiryWrapper">
+                            <label class="form-label fw-semibold">
+                                Expiry Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date"
+                                   name="expiry_date"
+                                   id="expiryDate"
+                                   class="form-control">
+                        </div>
+
+                        <!-- Loader -->
+                        <div id="loader"
+                             class="d-none text-primary fw-semibold mb-3">
+                            <div class="spinner-border spinner-border-sm me-2"></div>
+                            Saving...
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit"
+                                    class="btn btn-primary px-4">
+                                Save
+                            </button>
+
+                            <a href="{{ route('admin.products') }}"
+                               class="btn btn-secondary px-4">
+                                Back
+                            </a>
+                        </div>
+
+                    </form>
+
+                </div>
             </div>
 
-            <div>
-                <label for="composition" class="block font-semibold mb-1">Composition</label>
-                <textarea name="composition" id="composition" class="w-full border rounded px-3 py-2" placeholder="Composition"></textarea>
-            </div>
-
-            <div>
-                <label for="type" class="block font-semibold mb-1">Product Type</label>
-                <select name="type" id="productType" class="w-full border rounded px-3 py-2">
-                    <option value="expiry">Expiry Product</option>
-                    <option value="new">New Launch</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="image" class="block font-semibold mb-1">Product Image</label>
-                <input type="file" name="image" id="image" accept="image/*" class="w-full border rounded px-3 py-2">
-            </div>
-
-            <div id="expiryWrapper">
-                <label for="expiryDate" class="block font-semibold mb-1">Expiry Date</label>
-                <input type="date" name="expiry_date" id="expiryDate" class="w-full border rounded px-3 py-2">
-            </div>
-
-            <div id="loader" class="hidden font-semibold">Saving...</div>
-
-            <div class="flex gap-3">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-                    Save
-                </button>
-                <a href="{{ route('admin.products') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition">
-                    Back
-                </a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
+{{-- JS --}}
 <script>
-const typeSelect = document.getElementById('productType');
-const expiryWrapper = document.getElementById('expiryWrapper');
-const expiryInput = document.getElementById('expiryDate');
-const form = document.getElementById('productForm');
-const messageBox = document.getElementById('formMessage');
-const loader = document.getElementById('loader');
 
-// Toggle expiry field
+const typeSelect     = document.getElementById('productType');
+const expiryWrapper = document.getElementById('expiryWrapper');
+const expiryInput   = document.getElementById('expiryDate');
+const form          = document.getElementById('productForm');
+const messageBox    = document.getElementById('formMessage');
+const loader        = document.getElementById('loader');
+
+
+// Toggle Expiry Field
 typeSelect.addEventListener('change', function () {
+
     if (this.value === 'new') {
-        expiryWrapper.style.display = 'none';
+        expiryWrapper.classList.add('d-none');
         expiryInput.value = '';
         expiryInput.removeAttribute('required');
     } else {
-        expiryWrapper.style.display = 'block';
-        expiryInput.setAttribute('required', 'required');
+        expiryWrapper.classList.remove('d-none');
+        expiryInput.setAttribute('required','required');
     }
+
 });
 
-// AJAX submit
-form.addEventListener('submit', function (e) {
+
+// AJAX Submit
+form.addEventListener('submit', function(e){
+
     e.preventDefault();
-    messageBox.classList.add('hidden');
-    loader.classList.remove('hidden');
+
+    messageBox.classList.add('d-none');
+    loader.classList.remove('d-none');
 
     fetch('/admin/products/store', {
         method: 'POST',
@@ -88,45 +153,54 @@ form.addEventListener('submit', function (e) {
         },
         body: new FormData(this)
     })
+
     .then(async response => {
+
         const data = await response.json();
-        loader.classList.add('hidden');
+        loader.classList.add('d-none');
 
         if (!response.ok) {
+
             let msg = '';
+
             if (response.status === 422) {
-                Object.values(data.errors).forEach(err => { msg += err[0] + '<br>'; });
+                Object.values(data.errors).forEach(err => {
+                    msg += err[0] + '<br>';
+                });
             } else {
                 msg = data.message || 'Something went wrong';
             }
+
             messageBox.innerHTML = msg;
-            messageBox.classList.remove('hidden', 'bg-green-500');
-            messageBox.classList.add('bg-red-500');
+            messageBox.className = 'alert alert-danger';
+            messageBox.classList.remove('d-none');
             return;
         }
 
-        messageBox.innerHTML = data.message;
-        messageBox.classList.remove('hidden', 'bg-red-500');
-        messageBox.classList.add('bg-green-500');
+        messageBox.innerHTML = '✅ ' + data.message;
+        messageBox.className = 'alert alert-success';
+        messageBox.classList.remove('d-none');
 
-        setTimeout(() => { window.location.href = '/admin/product-listing'; }, 1500);
+        setTimeout(() => {
+            window.location.href = '/admin/product-listing';
+        }, 1500);
+
         form.reset();
-        expiryWrapper.style.display = 'block';
+        expiryWrapper.classList.remove('d-none');
+
     })
+
     .catch(() => {
-        loader.classList.add('hidden');
+
+        loader.classList.add('d-none');
+
         messageBox.innerHTML = 'Server error';
-        messageBox.classList.remove('hidden', 'bg-green-500');
-        messageBox.classList.add('bg-red-500');
+        messageBox.className = 'alert alert-danger';
+        messageBox.classList.remove('d-none');
+
     });
+
 });
 </script>
 
-<style>
-.hidden { display: none; }
-#loader { margin: 5px 0; }
-.bg-red-500 { background-color: #f56565; }
-.bg-green-500 { background-color: #48bb78; }
-#formMessage { transition: all 0.3s; }
-</style>
 @endsection

@@ -3,193 +3,214 @@
 @section('title','Targets Listing')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="container-fluid py-4">
 
     <!-- HEADER -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">🎯 Targets</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">🎯 Targets Listing</h2>
 
-        <a href="{{ route('admin.targets') }}"
-           class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow">
+        <a href="{{ route('admin.targets') }}" class="btn btn-success shadow-sm">
             + Assign New Target
         </a>
     </div>
 
     <!-- SUCCESS MESSAGE -->
     @if(session('success'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+        <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     <!-- FILTER BAR -->
-    <div class="flex flex-wrap gap-2 mb-6">
-        <a href="{{ route('admin.list') }}"
-           class="px-4 py-2 rounded-lg text-sm font-semibold
-           {{ empty($statusFilter) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700' }}">
-            All
-        </a>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex flex-wrap gap-2">
 
-        <a href="?status=achieved_full"
-           class="px-4 py-2 rounded-lg text-sm font-semibold
-           {{ $statusFilter === 'achieved_full' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700' }}">
-            Achieved (Full)
-        </a>
+            <a href="{{ route('admin.list') }}"
+               class="btn btn-sm {{ empty($statusFilter) ? 'btn-primary' : 'btn-outline-secondary' }}">
+                All
+            </a>
 
-        <a href="?status=achieved_partial"
-           class="px-4 py-2 rounded-lg text-sm font-semibold
-           {{ $statusFilter === 'achieved_partial' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700' }}">
-            Achieved (Partial)
-        </a>
+            <a href="{{ route('admin.list',['status'=>'achieved_full']) }}"
+               class="btn btn-sm {{ $statusFilter==='achieved_full' ? 'btn-success' : 'btn-outline-success' }}">
+                Achieved (Full)
+            </a>
 
-        <a href="?status=not_achieved"
-           class="px-4 py-2 rounded-lg text-sm font-semibold
-           {{ $statusFilter === 'not_achieved' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700' }}">
-            Not Achieved
-        </a>
+            <a href="{{ route('admin.list',['status'=>'achieved_partial']) }}"
+               class="btn btn-sm {{ $statusFilter==='achieved_partial' ? 'btn-warning text-white' : 'btn-outline-warning' }}">
+                Achieved (Partial)
+            </a>
 
-        <a href="?status=expired"
-           class="px-4 py-2 rounded-lg text-sm font-semibold
-           {{ $statusFilter === 'expired' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-700' }}">
-            Expired
-        </a>
+            <a href="{{ route('admin.list',['status'=>'not_achieved']) }}"
+               class="btn btn-sm {{ $statusFilter==='not_achieved' ? 'btn-danger' : 'btn-outline-danger' }}">
+                Not Achieved
+            </a>
+
+            <a href="{{ route('admin.list',['status'=>'expired']) }}"
+               class="btn btn-sm {{ $statusFilter==='expired' ? 'btn-dark' : 'btn-outline-dark' }}">
+                Expired
+            </a>
+
+        </div>
     </div>
 
-    <!-- TABLE -->
-    <div class="bg-white rounded-xl shadow overflow-x-auto">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                <tr>
-                    <th class="px-4 py-3">#</th>
-                    <th class="px-4 py-3">Product</th>
-                    <th class="px-4 py-3">Product Admin</th>
-                    <th class="px-4 py-3">Type</th>
-                    <th class="px-4 py-3">Target</th>
-                    <th class="px-4 py-3">Achieved</th>
-                    <th class="px-4 py-3">Pending</th>
-                    <th class="px-4 py-3">Start Date</th>
-                    <th class="px-4 py-3">End Date</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3 text-center">View</th>
-                </tr>
-            </thead>
+    <!-- TABLE CARD -->
+    <div class="card shadow-lg border-0">
+        <div class="card-body p-0">
 
-            <tbody class="divide-y">
-            @forelse($targets as $index => $target)
-                @php
-                    $today = \Carbon\Carbon::today();
-                    $startDate = \Carbon\Carbon::parse($target->start_date);
-                    $endDate   = \Carbon\Carbon::parse($target->end_date);
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
 
-                    $status = '';
-                    $pendingValue = 0;
-                    $rowClass = '';
+                    <!-- TABLE HEAD -->
+                    <thead class="table-light text-uppercase small">
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Product Admin</th>
+                            <th>Type</th>
+                            <th>Target</th>
+                            <th width="220">Achieved</th>
+                            <th>Pending</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th class="text-center">View</th>
+                        </tr>
+                    </thead>
 
-                    // Amount / Boxes logic
-                    $valueColumn = $target->target_type === 'amount' ? 'amount' : 'boxes_sold';
+                    <!-- TABLE BODY -->
+                    <tbody>
+                    @forelse($targets as $index => $target)
 
-                    // Approved sales only
-                    $validSales = $target->sales->filter(fn($sale) =>
-                        $sale->status === 'approved' &&
-                        $sale->accountant_status === 'approved'
-                    );
+                        @php
+                            $today = \Carbon\Carbon::today();
+                            $startDate = \Carbon\Carbon::parse($target->start_date);
+                            $endDate   = \Carbon\Carbon::parse($target->end_date);
 
-                    $totalSales = $validSales->sum($valueColumn);
+                            $valueColumn = $target->target_type === 'amount' ? 'amount' : 'boxes_sold';
 
-                    // ⏳ PENDING
-                    if ($today->lt($startDate)) {
-                        $status = 'Target Pending';
-                        $pendingValue = $target->target_value;
-                        $rowClass = 'bg-blue-100';
+                            $validSales = $target->sales->filter(fn($sale) =>
+                                $sale->status === 'approved' &&
+                                $sale->accountant_status === 'approved'
+                            );
 
-                    // ❌ EXPIRED
-                    } elseif ($today->gt($endDate)) {
-                        $status = 'Target Expired';
-                        $pendingValue = null;
-                        $rowClass = 'bg-gray-100';
+                            $totalSales = $validSales->sum($valueColumn);
+                            $pendingValue = max($target->target_value - $totalSales, 0);
 
-                    // 🔥 ACTIVE
-                    } else {
+                            $status = '';
+                            $badge = '';
+                            $rowClass = '';
 
-                        $pendingValue = max($target->target_value - $totalSales, 0);
+                            if ($today->lt($startDate)) {
+                                $status = 'Target Pending';
+                                $badge = 'info';
+                                $rowClass = 'table-primary';
 
-                        $executiveCount = $target->executives_count ?? 1;
-                        $perExecutiveTarget = $target->target_value / max($executiveCount,1);
+                            } elseif ($today->gt($endDate)) {
+                                $status = 'Target Expired';
+                                $badge = 'dark';
+                                $rowClass = 'table-secondary';
 
-                        $executivesMetTarget = $validSales
-                            ->groupBy('executive_id')
-                            ->filter(fn($sales) => $sales->sum($valueColumn) >= $perExecutiveTarget)
-                            ->count();
-
-                        if ($totalSales >= $target->target_value) {
-                            if ($executivesMetTarget == $executiveCount) {
-                                $status = 'Target Achieved (Full)';
-                                $rowClass = 'bg-green-100';
                             } else {
-                                $status = 'Target Achieved (Partial)';
-                                $rowClass = 'bg-yellow-100';
+
+                                if ($totalSales >= $target->target_value) {
+                                    $status = 'Target Achieved';
+                                    $badge = 'success';
+                                    $rowClass = 'table-success';
+                                } else {
+                                    $status = 'Target Not Achieved';
+                                    $badge = 'danger';
+                                    $rowClass = 'table-danger';
+                                }
                             }
-                        } else {
-                            $status = 'Target Not Achieved';
-                            $rowClass = 'bg-red-100';
-                        }
-                    }
-                @endphp
 
-                <tr class="{{ $rowClass }}">
-                    <td class="px-4 py-3">{{ $index + 1 }}</td>
-                    <td class="px-4 py-3 font-semibold">{{ $target->product->name ?? '-' }}</td>
-                    <td class="px-4 py-3">{{ $target->executive->name ?? '-' }}</td>
-                    <td class="px-4 py-3">
-                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                            {{ ucfirst($target->target_type) }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 font-semibold">{{ $target->target_value }}</td>
+                            $percent = $target->target_value > 0
+                                ? min(round(($totalSales / $target->target_value) * 100),100)
+                                : 0;
+                        @endphp
 
-                    <td class="px-4 py-3">
-                        <div class="flex flex-col">
-                            <span class="font-semibold text-green-700">
-                                {{ $totalSales }}
-                            </span>
-                            <span class="text-xs text-gray-500">
-                                {{ round(($totalSales / $target->target_value) * 100, 1) }}%
-                            </span>
-                        </div>
-                    </td>
+                        <tr class="{{ $rowClass }}">
 
+                            <td>{{ $index + 1 }}</td>
 
-                    <!-- ✅ PENDING VALUE -->
-                    <td class="px-4 py-3 font-semibold">
-                        {{ is_null($pendingValue) ? '-' : $pendingValue }}
-                    </td>
+                            <td class="fw-semibold">
+                                {{ $target->product->name ?? '-' }}
+                            </td>
 
-                    <td class="px-4 py-3">{{ $target->start_date }}</td>
-                    <td class="px-4 py-3">{{ $target->end_date }}</td>
+                            <td>
+                                {{ $target->executive->name ?? '-' }}
+                            </td>
 
-                    <td class="px-4 py-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold">
-                            {{ $status }}
-                        </span>
-                    </td>
+                            <td>
+                                <span class="badge bg-primary text-uppercase">
+                                    {{ ucfirst($target->target_type) }}
+                                </span>
+                            </td>
 
-                    <td class="px-4 py-3 text-center">
-                        <a href="{{ route('admin.products.details', $target->product->id) }}"
-                           class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs">
-                            View
-                        </a>
-                    </td>
-                </tr>
+                            <td class="fw-bold">
+                                {{ $target->target_value }}
+                            </td>
 
-            @empty
-                <tr>
-                    <td colspan="10" class="text-center py-6 text-gray-500">
-                        No targets found
-                    </td>
-                </tr>
-            @endforelse
-            </tbody>
-        </table>
+                            <!-- ACHIEVED WITH PROGRESS -->
+                            <td>
+                                <div class="fw-semibold text-success">
+                                    {{ $totalSales }}
+                                </div>
+
+                                <div class="progress" style="height:6px;">
+                                    <div class="progress-bar bg-success"
+                                         style="width: {{ $percent }}%">
+                                    </div>
+                                </div>
+
+                                <small class="text-muted">{{ $percent }}%</small>
+                            </td>
+
+                            <!-- PENDING -->
+                            <td class="fw-semibold">
+                                {{ $pendingValue }}
+                            </td>
+
+                            <!-- DATES -->
+                            <td>
+                                {{ $startDate->format('d M Y') }}
+                            </td>
+
+                            <td>
+                                {{ $endDate->format('d M Y') }}
+                            </td>
+
+                            <!-- STATUS -->
+                            <td>
+                                <span class="badge bg-{{ $badge }} px-3 py-2">
+                                    {{ $status }}
+                                </span>
+                            </td>
+
+                            <!-- VIEW -->
+                            <td class="text-center">
+                                <a href="{{ route('admin.products.details', $target->product->id) }}"
+                                   class="btn btn-sm btn-primary">
+                                    View
+                                </a>
+                            </td>
+
+                        </tr>
+
+                    @empty
+                        <tr>
+                            <td colspan="11" class="text-center py-5 text-muted">
+                                No targets found
+                            </td>
+                        </tr>
+                    @endforelse
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
     </div>
+
 </div>
 @endsection

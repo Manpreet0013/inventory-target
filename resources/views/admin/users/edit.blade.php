@@ -3,11 +3,25 @@
 @section('title', 'Edit User')
 
 @section('content')
-<div class="container mx-auto mt-6">
+<div class="container-fluid py-4">
 
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">Edit User</h3>
+            <small class="text-muted">Update user details</small>
+        </div>
+
+        <a href="{{ route('admin.users.index') }}"
+           class="btn btn-secondary shadow-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Error Messages -->
     @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <ul class="list-disc list-inside mb-0">
+        <div class="alert alert-danger shadow-sm">
+            <ul class="mb-0">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -15,89 +29,93 @@
         </div>
     @endif
 
-    <div class="bg-white shadow-md rounded px-6 py-6">
-        <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
-            @csrf
-            @method('PATCH')
+    <!-- Card -->
+    <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-body p-4">
 
-            <div class="mb-4">
-                <label for="name" class="block font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                <input type="text" name="name" id="name"
-                       value="{{ old('name', $user->name) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required>
-            </div>
+            <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
 
-            <div class="mb-4">
-                <label for="email" class="block font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
-                <input type="email" name="email" id="email"
-                       value="{{ old('email', $user->email) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required>
-            </div>
+                <div class="row">
 
-            <div class="mb-4">
-                <label for="role" class="block font-medium text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
-                <!-- <select name="role" id="role"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required>
-                    <option value="">-- Select Role --</option>
-                    @foreach($roles as $role)
-                        <option value="{{ $role->name }}" 
-                                {{ $user->roles->pluck('name')->contains($role->name) ? 'selected' : '' }}>
-                            {{ $role->name }}
-                        </option>
-                    @endforeach
-                </select> -->
-                <select id="role"
-                        class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100 cursor-not-allowed"
-                        disabled>
-                    @foreach($roles as $role)
-                        <option value="{{ $role->name }}"
-                            {{ $user->roles->pluck('name')->contains($role->name) ? 'selected' : '' }}>
-                            {{ $role->name }}
-                        </option>
-                    @endforeach
-                </select>
+                    <!-- Name -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               name="name"
+                               value="{{ old('name', $user->name) }}"
+                               class="form-control rounded-3"
+                               required>
+                    </div>
 
-                {{-- Hidden field so value is submitted --}}
-                <input type="hidden" name="role" value="{{ $user->roles->first()->name }}">
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        <input type="email"
+                               name="email"
+                               value="{{ old('email', $user->email) }}"
+                               class="form-control rounded-3"
+                               required>
+                    </div>
 
-            </div>
+                    <!-- Role (Disabled UI) -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Role
+                        </label>
 
-            <div class="mb-6">
-                <!-- <label for="company_id" class="block font-medium text-gray-700 mb-1">Company</label>
-                <select name="company_id" id="company_id"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">-- Select Company --</option>
-                    @foreach($companies as $company)
-                        <option value="{{ $company->id }}" 
-                                {{ $user->company_id == $company->id ? 'selected' : '' }}>
-                            {{ $company->name }}
-                        </option>
-                    @endforeach
-                </select> -->
-                @php
-                    $companyId = $user->company_id ?? $companies->first()?->id;
-                @endphp
+                        <select class="form-select bg-light rounded-3" disabled>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->name }}"
+                                    {{ $user->roles->pluck('name')->contains($role->name) ? 'selected' : '' }}>
+                                    {{ $role->name }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                @if($companyId)
-                    <input type="hidden" name="company_id" value="{{ $companyId }}">
-                @endif
+                        <!-- Hidden Role Value -->
+                        <input type="hidden"
+                               name="role"
+                               value="{{ $user->roles->first()->name }}">
+                    </div>
 
-            </div>
+                    <!-- Company Hidden -->
+                    @php
+                        $companyId = $user->company_id ?? $companies->first()?->id;
+                    @endphp
 
-            <div class="flex items-center gap-3">
-                <button type="submit" 
-                        class="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition">
-                    Update
-                </button>
-                <a href="{{ route('admin.users.index') }}"
-                   class="bg-gray-400 text-white px-5 py-2 rounded hover:bg-gray-500 transition">
-                    Back
-                </a>
-            </div>
-        </form>
+                    @if($companyId)
+                        <input type="hidden"
+                               name="company_id"
+                               value="{{ $companyId }}">
+                    @endif
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-2 mt-3">
+
+                    <button type="submit"
+                            class="btn btn-primary px-4 shadow-sm">
+                        <i class="bi bi-check-circle"></i> Update User
+                    </button>
+
+                    <a href="{{ route('admin.users.index') }}"
+                       class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
     </div>
+
 </div>
 @endsection
