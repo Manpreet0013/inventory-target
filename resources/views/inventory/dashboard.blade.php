@@ -11,15 +11,13 @@
         <h4 class="fw-bold mb-0">Expiring Products</h4>
 
         <div class="d-flex gap-2">
-            <button onclick="openProductModal()"
+           <button onclick="openProductModal()"
                 class="btn btn-success">
-                + Add Target
+                + Add Product
             </button>
 
-            <a href="{{ route('target.list') }}"
-               class="btn btn-primary">
-               View Targets
-            </a>
+          
+
         </div>
     </div>
 
@@ -197,7 +195,7 @@
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- ================= JS ================= -->
 
@@ -281,5 +279,7 @@ document.getElementById('productForm')
 
 });
 </script>
+
+
 
 @endsection

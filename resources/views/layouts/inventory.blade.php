@@ -3,78 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <title>@yield('title')</title>
+
     @vite(['resources/css/app.css','resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Material Icons (Optional) -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f1f5f9;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: #0f172a;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar .nav-link {
+            color: #cbd5f1;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            transition: 0.2s;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: #1e293b;
+            color: #fff;
+        }
+
+        .sidebar.collapsed .link-text {
+            display: none;
+        }
+
+        .topbar {
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
-<body class="bg-slate-100 font-sans" x-data="{ sidebarCollapsed: false }">
 
-<div class="flex min-h-screen">
+<body>
 
-    <!-- Sidebar -->
-    <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" 
-           class="bg-slate-900 text-white transition-all duration-300 relative">
+<div class="d-flex">
 
-        <!-- Sidebar header -->
-        <div class="flex items-center justify-between p-5 border-b border-slate-700">
-            <span x-show="!sidebarCollapsed" class="text-xl font-bold">Inventory Pro</span>
-            <button @click="sidebarCollapsed = !sidebarCollapsed" class="text-white focus:outline-none">
-                <span class="material-icons">menu</span>
+    <!-- ================= SIDEBAR ================= -->
+    <div id="sidebar" class="sidebar p-3">
+
+        <!-- Logo / Toggle -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="text-white mb-0 link-text">Inventory Pro</h5>
+            <button class="btn btn-sm btn-light" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
             </button>
         </div>
 
-        <!-- Navigation -->
-        <nav class="p-4 space-y-2 text-sm">
-            @php $activeClass = 'bg-slate-700 text-white'; @endphp
-            @php $roleSlug = strtolower(str_replace(' ', '-', auth()->user()->roles->first()->name ?? '')); @endphp
+        @php $activeClass = 'active'; @endphp
+        @php $roleSlug = strtolower(str_replace(' ', '-', auth()->user()->roles->first()->name ?? '')); @endphp
+
+        <!-- Nav -->
+        <nav class="nav flex-column text-sm">
 
             <a href="{{ route('inventory.dashboard') }}"
-               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
-               {{ request()->is('inventory/dashboard') ? $activeClass : 'hover:bg-slate-700' }}">
-                <span class="material-icons">dashboard</span>
-                <span x-show="!sidebarCollapsed" x-transition.opacity.duration.200ms>Dashboard</span>
+               class="nav-link {{ request()->is('inventory/dashboard') ? $activeClass : '' }}">
+                <i class="bi bi-speedometer2"></i>
+                <span class="link-text">Dashboard</span>
             </a>
 
             <a href="{{ route('inventory.report') }}"
-               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
-               {{ request()->is('inventory/reports') ? $activeClass : 'hover:bg-slate-700' }}">
-                <span class="material-icons">assessment</span>
-                <span x-show="!sidebarCollapsed" x-transition.opacity.duration.200ms>Reports</span>
+               class="nav-link {{ request()->is('inventory/reports') ? $activeClass : '' }}">
+                <i class="bi bi-bar-chart"></i>
+                <span class="link-text">Reports</span>
             </a>
 
             <a href="{{ route('role.profile', $roleSlug) }}"
-               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
-               {{ request()->is('inventory/profile') ? $activeClass : 'hover:bg-slate-700' }}">
-                <span class="material-icons">person</span>
-                <span x-show="!sidebarCollapsed" x-transition.opacity.duration.200ms>Profile</span>
+               class="nav-link {{ request()->is('inventory/profile') ? $activeClass : '' }}">
+                <i class="bi bi-person"></i>
+                <span class="link-text">Profile</span>
             </a>
 
             <!-- Logout -->
-            <form method="POST" action="{{ route('logout') }}" class="mt-4 px-4">
+            <form method="POST" action="{{ route('logout') }}" class="mt-3">
                 @csrf
-                <button type="submit" class="w-full flex items-center gap-3 py-2 px-3 bg-red-600 text-white rounded hover:bg-red-700">
-                    <span class="material-icons">logout</span>
-                    <span x-show="!sidebarCollapsed" x-transition.opacity.duration.200ms>Logout</span>
+                <button type="submit" class="btn btn-danger w-100 d-flex align-items-center gap-2">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="link-text">Logout</span>
                 </button>
             </form>
+
         </nav>
 
-    </aside>
+    </div>
 
-    <!-- Main content -->
-    <main class="flex-1 transition-all duration-300">
-        <!-- Top bar -->
-        <header class="bg-white px-6 py-4 shadow flex justify-between items-center">
-            <h1 class="text-xl font-semibold text-slate-800">@yield('title')</h1>
-            <div class="text-sm font-medium">{{ auth()->user()->name }}</div>
-        </header>
 
-        <section class="p-6">
+    <!-- ================= MAIN ================= -->
+    <div class="flex-grow-1">
+
+        <!-- Topbar -->
+        <div class="topbar px-4 py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-semibold">@yield('title')</h5>
+            <div class="fw-medium text-muted">
+                <i class="bi bi-person-circle me-1"></i>
+                {{ auth()->user()->name }}
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="p-4">
             @yield('content')
-        </section>
-    </main>
+        </div>
+
+    </div>
 
 </div>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
 
 </body>
 </html>
