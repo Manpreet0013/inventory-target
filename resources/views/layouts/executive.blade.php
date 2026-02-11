@@ -33,7 +33,7 @@
                class="flex items-center gap-3 px-4 py-2 rounded-lg transition
                {{ request()->is('executive/report') ? $activeClass : 'hover:bg-slate-700' }}">
                 <span class="material-icons">assessment</span>
-                <span x-show="!sidebarCollapsed" x-transition.opacity.duration.200ms>My Report</span>
+                <span x-show="!sidebarCollapsed" x-transition.opacity.duration.200ms>Dashboard</span>
             </a>
 
             <a href="{{ route('executive.targets.managed') }}"

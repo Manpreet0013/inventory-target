@@ -27,16 +27,23 @@
                             <!-- Product -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Product</label>
+                                @php
+                                    $selectedProduct = request()->get('product_id');
+                                @endphp
+
                                 <select name="product_id" id="product_id" class="form-select">
                                     @foreach($products as $product)
                                         <option value="{{ $product->id }}"
-                                                data-start="{{ $product->created_at->format('Y-m-d') }}"
-                                                data-end="{{ $product->expiry_date }}"
-                                                data-type="{{ $product->type }}">
+                                            data-start="{{ \Carbon\Carbon::parse($product->created_at)->format('Y-m-d') }}"
+                                            data-end="{{ $product->expiry_date ? \Carbon\Carbon::parse($product->expiry_date)->format('Y-m-d') : '' }}"
+                                            data-type="{{ $product->type }}"
+                                            data-stock="{{ $product->stock }}"
+                                            {{ $selectedProduct == $product->id ? 'selected' : '' }}>
                                             {{ $product->name }}
                                         </option>
                                     @endforeach
                                 </select>
+
                             </div>
 
                             <!-- Executive -->
@@ -61,19 +68,19 @@
                             <!-- Target Value -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Target Value</label>
-                                <input type="number" name="target_value" class="form-control" placeholder="Enter Target Value">
+                                <input type="number" name="target_value" class="form-control" placeholder="Enter Target Value" required>
                             </div>
 
                             <!-- Start Date -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Start Date</label>
-                                <input type="date" name="start_date" id="start_date" class="form-control">
+                                <input type="date" name="start_date" id="start_date" class="form-control" required>
                             </div>
 
                             <!-- End Date -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">End Date</label>
-                                <input type="date" name="end_date" id="end_date" class="form-control">
+                                <input type="date" name="end_date" id="end_date" class="form-control" required>
                             </div>
 
                         </div>
@@ -109,6 +116,8 @@ const loader = document.getElementById('loader');
 const productSelect = document.getElementById('product_id');
 const startDateInput = document.getElementById('start_date');
 const endDateInput = document.getElementById('end_date');
+const submitBtn = targetForm.querySelector('button[type="submit"]');
+const targetValueInput = document.querySelector('input[name="target_value"]');
 
 function showMessage(msg,type='success'){
     messageBox.classList.remove('d-none','alert-success','alert-danger');
@@ -118,29 +127,48 @@ function showMessage(msg,type='success'){
 
 function updateDates(){
     const selected = productSelect.options[productSelect.selectedIndex];
-    const start = selected.dataset.start;
-    const end   = selected.dataset.end;
-    const type  = selected.dataset.type;
+
+    const start = selected.dataset.start || '';
+    const end   = selected.dataset.end || '';
+    const type  = selected.dataset.type || '';
+    const stock = selected.dataset.stock || 0;
     const today = new Date().toISOString().split('T')[0];
 
+    // Date limits
     startDateInput.min = start;
     startDateInput.max = end;
-    endDateInput.min   = start;
-    endDateInput.max   = end;
 
-    startDateInput.value = start;
-    endDateInput.value   = end;
+    endDateInput.min = start;
+    endDateInput.max = end;
 
-    if(type==='expiry' && end < today){
-        showMessage('❌ This product is expired. Target cannot be assigned.','danger');
-        targetForm.querySelector('button[type="submit"]').disabled = true;
-    }else{
-        messageBox.classList.add('d-none');
-        targetForm.querySelector('button[type="submit"]').disabled = false;
+    // Auto-fill Start Date
+    if(start){
+        startDateInput.value = start;
     }
+
+    // Auto-fill End Date
+    if(end){
+        endDateInput.value = end;
+    }
+
+    // ✅ Auto-fill Target Value (even if 0)
+    targetValueInput.value = stock;
+
+    // Disable only if expired
+    if(type === 'expiry' && end && end < today){
+        showMessage('❌ This product is expired. Target cannot be assigned.','danger');
+        submitBtn.disabled = true;
+        return;
+    }
+
+    messageBox.classList.add('d-none');
+    submitBtn.disabled = false;
 }
 
+// Run on page load
 updateDates();
+
+// Run when product changes
 productSelect.addEventListener('change',updateDates);
 
 

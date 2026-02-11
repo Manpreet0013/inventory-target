@@ -38,7 +38,7 @@
 
         <label class="block mb-1 font-medium">Sale Date</label>
         <input type="date" name="sale_date" min="{{ $target->start_date }}" max="{{ $target->end_date }}"
-               class="border w-full px-2 py-1 mb-3 rounded" required>
+               class="border w-full px-2 py-1 mb-3 rounded" value="{{ date('Y-m-d') }}" required>
         <p class="text-sm text-gray-500">Allowed: {{ $target->start_date }} to {{ $target->end_date }}</p>
 
         <!-- @if($target->target_type === 'box')

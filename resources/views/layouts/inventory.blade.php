@@ -87,11 +87,7 @@
                 <span class="link-text">Dashboard</span>
             </a>
 
-            <a href="{{ route('inventory.report') }}"
-               class="nav-link {{ request()->is('inventory/reports') ? $activeClass : '' }}">
-                <i class="bi bi-bar-chart"></i>
-                <span class="link-text">Reports</span>
-            </a>
+        
 
             <a href="{{ route('role.profile', $roleSlug) }}"
                class="nav-link {{ request()->is('inventory/profile') ? $activeClass : '' }}">

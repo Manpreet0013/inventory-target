@@ -36,6 +36,17 @@
                                    required>
                         </div>
 
+                        <!-- Product Stock -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Product Stock <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="stock"
+                                   class="form-control"
+                                   placeholder="Enter product stock"
+                                   required>
+                        </div>
+
                         <!-- Composition -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">

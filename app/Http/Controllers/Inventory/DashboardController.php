@@ -44,6 +44,7 @@ class DashboardController extends Controller
                 'composition'  => $request->composition,
                 'type'         => $request->type,
                 'image'        => $imagePath,
+                'stock'        => $request->stock,
             ]);
 
             // Fetch admins inside method

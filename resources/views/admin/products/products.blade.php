@@ -34,6 +34,7 @@
                             <th>Composition</th>
                             <th>Type</th>
                             <th>Expiry</th>
+                            <th>Stock</th>
                             <th class="text-center">Targets</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Actions</th>
@@ -92,10 +93,15 @@
                                 {{ $product->expiry_date ?? '-' }}
                             </td>
 
+                            <!--  Stock -->
+                            <td class="text-center fw-semibold">
+                                {{ $product->stock }}
+                            </td>
+
                             <!-- Targets Count -->
                             <td class="text-center fw-semibold">
                                 {{ $product->targets()->whereNull('parent_id')->count() }}
-                            </td>
+                            </td>                           
 
                             <!-- Status -->
                             <td class="text-center">
@@ -138,7 +144,7 @@
                                     @if ($parentTargetCount === 0)
                                         <a href="{{ route('admin.targets', ['product_id' => $product->id]) }}"
                                            class="btn btn-sm btn-success">
-                                            Add
+                                            Add Target
                                         </a>
                                     @endif
 

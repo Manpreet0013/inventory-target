@@ -28,21 +28,36 @@
             <tr>
                 <th class="px-3 py-2 border">#</th>
                 <th class="px-3 py-2 border">Party</th>
-                <th class="px-3 py-2 border text-right">{{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}</th>
+                <th class="px-3 py-2 border">Executive</th> <!-- NEW -->
+                <th class="px-3 py-2 border text-right">
+                    {{ $target->target_type === 'box' ? 'Boxes' : 'Amount' }}
+                </th>
                 <th class="px-3 py-2 border">Date</th>
                 <th class="px-3 py-2 border">Product Admin Status</th>
                 <th class="px-3 py-2 border">Accountant Status</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($target->sales as $index => $sale)
-            <tr class="border-t hover:bg-gray-50">
-                <td class="px-3 py-2 border text-center font-semibold">{{ $index + 1 }}</td>
+
+            @php $row = 1; @endphp
+
+            {{-- ================= PARENT SALES ================= --}}
+            @foreach($target->sales as $sale)
+            <tr class="border-t hover:bg-gray-50 bg-blue-50">
+                <td class="px-3 py-2 border text-center font-semibold">{{ $row++ }}</td>
                 <td class="px-3 py-2 border">{{ $sale->party_name }}</td>
+                <td class="px-3 py-2 border text-center font-medium">
+                    {{ $sale->executive->name ?? '-' }}
+                </td>
+
                 <td class="px-3 py-2 border text-right font-semibold">
                     {{ $target->target_type === 'box' ? $sale->boxes_sold : $sale->amount }}
                 </td>
-                <td class="px-3 py-2 border">{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}</td>
+
+                <td class="px-3 py-2 border">
+                    {{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}
+                </td>
+
                 <td class="px-3 py-2 border text-center">
                     <span class="px-2 py-1 rounded text-xs font-semibold
                         {{ $sale->status === 'approved' ? 'bg-green-100 text-green-700' : '' }}
@@ -51,6 +66,7 @@
                         {{ ucfirst($sale->status) }}
                     </span>
                 </td>
+
                 <td class="px-3 py-2 border text-center">
                     <span class="px-2 py-1 rounded text-xs font-semibold
                         {{ $sale->accountant_status === 'approved' ? 'bg-green-100 text-green-700' : '' }}
@@ -60,14 +76,67 @@
                     </span>
                 </td>
             </tr>
-            @empty
+            @endforeach
+
+
+            {{-- ================= CHILD SALES ================= --}}
+            @foreach($target->children as $child)
+                @foreach($child->sales as $sale)
+                <tr class="border-t hover:bg-gray-50 bg-green-50">
+                    <td class="px-3 py-2 border text-center font-semibold">{{ $row++ }}</td>
+                    <td class="px-3 py-2 border">
+                        {{ $sale->party_name }}
+                        <span class="text-xs text-gray-500">
+                            ({{ $sale->executive->name ?? 'Child Executive' }})
+                        </span>
+                    </td>
+
+                    <td class="px-3 py-2 border text-center font-medium">
+                        {{ $sale->executive->name ?? '-' }}
+                    </td>
+
+
+                    <td class="px-3 py-2 border text-right font-semibold">
+                        {{ $target->target_type === 'box' ? $sale->boxes_sold : $sale->amount }}
+                    </td>
+
+                    <td class="px-3 py-2 border">
+                        {{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}
+                    </td>
+
+                    <td class="px-3 py-2 border text-center">
+                        <span class="px-2 py-1 rounded text-xs font-semibold
+                            {{ $sale->status === 'approved' ? 'bg-green-100 text-green-700' : '' }}
+                            {{ $sale->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                            {{ $sale->status === 'rejected' ? 'bg-red-100 text-red-700' : '' }}">
+                            {{ ucfirst($sale->status) }}
+                        </span>
+                    </td>
+
+                    <td class="px-3 py-2 border text-center">
+                        <span class="px-2 py-1 rounded text-xs font-semibold
+                            {{ $sale->accountant_status === 'approved' ? 'bg-green-100 text-green-700' : '' }}
+                            {{ $sale->accountant_status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                            {{ $sale->accountant_status === 'rejected' ? 'bg-red-100 text-red-700' : '' }}">
+                            {{ ucfirst($sale->accountant_status) }}
+                        </span>
+                    </td>
+                </tr>
+                @endforeach
+            @endforeach
+
+
+            {{-- EMPTY CHECK --}}
+            @if($target->sales->isEmpty() && $target->children->flatMap->sales->isEmpty())
             <tr>
                 <td colspan="6" class="px-3 py-2 text-center border text-gray-500">
                     No sales recorded for this target yet.
                 </td>
             </tr>
-            @endforelse
+            @endif
+
         </tbody>
+
     </table>
 </div>
 

@@ -14,10 +14,7 @@
            <button onclick="openProductModal()"
                 class="btn btn-success">
                 + Add Product
-            </button>
-
-          
-
+            </button>     
         </div>
     </div>
 
@@ -31,9 +28,12 @@
 
                     <thead class="table-light">
                         <tr>
-                            <th>Product</th>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Composition</th>
+                            <th>Type</th>
+                            <th>Stock</th>
                             <th>Expiry Date</th>
-                            <th>Days Left</th>
                             <th class="text-end">Action</th>
                         </tr>
                     </thead>
@@ -42,37 +42,82 @@
                     @forelse($products as $product)
 
                         @php
-                            $expiry = \Carbon\Carbon::parse($product->expiry_date);
-                            $daysLeft = $expiry->isPast() ? 0 : $expiry->diffInDays(now());
-                            $isExpiring = !$expiry->isPast() && $daysLeft <= 180;
+                            $expiry = $product->expiry_date 
+                                ? \Carbon\Carbon::parse($product->expiry_date) 
+                                : null;
+
+                            $daysLeft = $expiry && !$expiry->isPast()
+                                ? $expiry->diffInDays(now())
+                                : 0;
+
+                            $isExpiring = $expiry && !$expiry->isPast() && $daysLeft <= 180;
                         @endphp
 
-                        <tr>
+                        <tr class="{{ $expiry && $expiry->isPast() ? 'table-danger' : '' }}">
 
+                            {{-- Image --}}
+                            <td>
+                                @if($product->image)
+                                    <img src="{{ asset('storage/'.$product->image) }}" 
+                                         width="50" height="50"
+                                         class="rounded shadow-sm">
+                                @else
+                                    <span class="text-muted small">No Image</span>
+                                @endif
+                            </td>
+
+                            {{-- Name --}}
                             <td class="fw-semibold">
                                 {{ $product->name }}
                             </td>
 
+                            {{-- Composition --}}
                             <td>
-                                {{ $expiry->format('d M Y') }}
+                                {{ $product->composition ?? '-' }}
                             </td>
 
+                            {{-- Type --}}
                             <td>
-                                @if($expiry->isPast())
-                                    <span class="badge bg-danger">
-                                        Expired
+                                @if($product->type == 'expiry')
+                                    <span class="badge bg-warning text-dark">
+                                        Expiry Product
                                     </span>
                                 @else
-                                    <span class="badge bg-warning text-dark">
-                                        {{ $daysLeft }} days left
+                                    <span class="badge bg-info text-dark">
+                                        New Product
                                     </span>
                                 @endif
                             </td>
 
+                            {{-- Stock --}}
+                            <td>
+                                @if($product->stock <= 0)
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                @elseif($product->stock <= 10)
+                                    <span class="badge bg-warning text-dark">
+                                        Low ({{ $product->stock }})
+                                    </span>
+                                @else
+                                    <span class="badge bg-success">
+                                        {{ $product->stock }}
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- Expiry Date --}}
+                            <td>
+                                @if($expiry)
+                                    {{ $expiry->format('d M Y') }}
+                                @else
+                                    <span class="text-muted">N/A</span>
+                                @endif
+                            </td>
+
+                
+                            {{-- Action --}}
                             <td class="text-end">
 
-                                @if(!$product->notified_at && $isExpiring)
-
+                                @if($isExpiring && !$product->notified_at)
                                     <button
                                         onclick="notifyAdmin({{ $product->id }})"
                                         class="btn btn-sm btn-danger">
@@ -80,17 +125,14 @@
                                     </button>
 
                                 @elseif($product->notified_at)
-
                                     <span class="badge bg-success">
                                         Notified
                                     </span>
 
                                 @else
-
                                     <span class="text-muted small">
-                                        Not expiring soon
+                                        No Action
                                     </span>
-
                                 @endif
 
                             </td>
@@ -100,8 +142,8 @@
                     @empty
 
                         <tr>
-                            <td colspan="4" class="text-center py-4 text-muted">
-                                No expiring products found 🎉
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                No products found 🎉
                             </td>
                         </tr>
 
@@ -109,6 +151,7 @@
                     </tbody>
 
                 </table>
+
             </div>
 
         </div>
@@ -143,6 +186,13 @@
                         <input type="text" name="name"
                                class="form-control"
                                placeholder="Enter product name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Product Stock</label>
+                        <input type="number" name="stock"
+                               class="form-control"
+                               placeholder="Enter product stock" required>
                     </div>
 
                     <div class="mb-3">
@@ -216,7 +266,7 @@ function closeProductModal() {
 // Notify Admin
 function notifyAdmin(productId) {
 
-    fetch(`/inventory/notify-admin/${productId}`, {
+    fetch(`/inventory/notify/${productId}`, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',

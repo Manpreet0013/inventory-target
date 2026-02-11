@@ -16,6 +16,7 @@ class Product extends Model
         'type',
         'image',
         'expiry_date',
+        'stock'
     ];
 
     protected $casts = [

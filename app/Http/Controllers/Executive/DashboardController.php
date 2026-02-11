@@ -330,10 +330,15 @@ class DashboardController extends Controller
               });
         })->distinct()->count();
 
-        $executiveProductCount = Product::whereHas('targets', function ($q) use ($executiveId) {
-            $q->where('created_by',$executiveId);
-        })->distinct()->count();
+        // $executiveProductCount = Product::whereHas('targets', function ($q) use ($executiveId) {
+        //     $q->where('created_by',$executiveId);
+        // })->distinct()->count();
 
+        $executiveProductCount = Target::where('executive_id',$executiveId)
+        ->whereNotNull('parent_id')
+        ->whereHas('creator', fn ($q) => $q->role('Executive'))
+        ->count();
+        
         return view('executive.report',[
             'adminProductCount'=>$adminProductCount,
             'executiveProductCount'=>$executiveProductCount,

@@ -110,6 +110,7 @@ class DashboardController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string',
+            'stock' => 'required|integer|min:0',
             'composition' => 'required|string',
             'type' => 'required|in:expiry,new',
             'expiry_date' => 'nullable|date|required_if:type,expiry',
@@ -120,7 +121,7 @@ class DashboardController extends Controller
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
-
+       
         Product::create($data);
 
         return response()->json([
