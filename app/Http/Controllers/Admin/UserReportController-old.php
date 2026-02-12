@@ -11,9 +11,9 @@ class UserReportController extends Controller
     public function show(User $user, Request $request)
     {
         $from = $request->from;
-        $to   = $request->to;
+        $to = $request->to;
 
-        // Targets assigned by Admin (parent_id = null)
+        // Prepare base query for targets assigned by admin (parent_id = null)
         $targetsQueryByAdmin = $user->targets()
             ->whereNull('parent_id')
             ->with([
@@ -29,6 +29,7 @@ class UserReportController extends Controller
                 'sales' => function($sq) use ($from, $to) {
                     if ($from) $sq->whereDate('sale_date', '>=', $from);
                     if ($to) $sq->whereDate('sale_date', '<=', $to);
+                    //$sq->where('status', 'approved'); // Only approved sales
                 },
                 'creator',
                 'executive'
@@ -39,7 +40,7 @@ class UserReportController extends Controller
 
         $targetsAssignedByAdmin = $targetsQueryByAdmin->paginate(10);
 
-        // Targets assigned to Executive (child targets)
+        // Targets assigned to executive (child targets)
         $targetsQueryToExec = Target::where('executive_id', $user->id)
             ->whereNotNull('parent_id')
             ->with([
@@ -57,14 +58,12 @@ class UserReportController extends Controller
 
         $targetsAssignedToExecutive = $targetsQueryToExec->paginate(10);
 
-        // Merge both collections for modals (not affecting tabs)
-        $allTargets = $targetsAssignedByAdmin->merge($targetsAssignedToExecutive);
-
         return view('admin.users.report', compact(
             'user',
             'targetsAssignedByAdmin',
-            'targetsAssignedToExecutive',
-            'allTargets' // for modal
+            'targetsAssignedToExecutive'
         ));
     }
+
+
 }

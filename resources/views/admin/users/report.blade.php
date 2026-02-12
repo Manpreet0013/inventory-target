@@ -14,229 +14,148 @@
 </form>
 
 <div x-data="{ 
-            tab: 'assignedByAdmin', 
-            modalOpen: false, 
-            teamModal: false,
-            selectedTarget: null,
-            selectedTeamTarget: null
-        }">
+    modalOpen: false,
+    teamModal: false,
+    selectedTarget: null,
+    selectedTeamTarget: null
+}"
+>
 
-     {{-- Tabs --}}
-    <div class="flex border-b-2 border-gray-200 mb-4">
-        <button @click="tab='assignedByAdmin'" 
-                :class="tab==='assignedByAdmin' ? 'border-b-4 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600'"
-                class="px-6 py-2 transition-colors">
-            Product Admin
-        </button>
-        <button @click="tab='assignedToExecutive'" 
-                :class="tab==='assignedToExecutive' ? 'border-b-4 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600'"
-                class="px-6 py-2 transition-colors">
-            Product Executive
-        </button>
-    </div>
+    @php
+    $allTargets = $targetsAssignedByAdmin->merge($targetsAssignedToExecutive);
+@endphp
 
-    {{-- Tab 1: Assigned by Admin --}}
-    <div x-show="tab==='assignedByAdmin'" class="overflow-x-auto">
-        <table class="min-w-full border border-gray-200 rounded-lg text-sm">
-            <thead class="bg-gray-100 uppercase text-gray-700 text-xs">
-                <tr>
-                    <th class="px-4 py-2">Product</th>
-                    <th class="px-4 py-2">Target Type</th>
-                    <th class="px-4 py-2">Assigned By</th>
-                    <th class="px-4 py-2">Type</th>
-                    <th class="px-4 py-2">Expiry</th>
-                    <th class="px-4 py-2 text-center">Total Target</th>
-                    <th class="px-4 py-2 text-center">Achieved</th>
-                    <th class="px-4 py-2 text-center">Remaining</th>
-                    <th class="px-4 py-2 text-center">Status</th>
-                    <th class="px-4 py-2">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                @forelse($targetsAssignedByAdmin as $target)
-                    @php
-                        $today = \Carbon\Carbon::today();
-                        $trBg = '';
-                        $trHover = '';
-                        $status = '';
+<div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg text-sm">
+        <thead class="bg-gray-100 uppercase text-gray-700 text-xs">
+            <tr>
+                <th class="px-4 py-2">Source</th>
+                <th class="px-4 py-2">Product</th>
+                <th class="px-4 py-2">Target Type</th>
+                <th class="px-4 py-2">Assigned By</th>
+                <th class="px-4 py-2">Type</th>
+                <th class="px-4 py-2">Expiry</th>
+                <th class="px-4 py-2 text-center">Total Target</th>
+                <th class="px-4 py-2 text-center">Achieved</th>
+                <th class="px-4 py-2 text-center">Remaining</th>
+                <th class="px-4 py-2 text-center">Status</th>
+                <th class="px-4 py-2">Actions</th>
+            </tr>
+        </thead>
 
-                        if ($today->gt(\Carbon\Carbon::parse($target->end_date))) {
-                            $status = 'Expired';
-                            $trBg = 'bg-gray-100';
-                            $trHover = 'hover:bg-gray-200';
+        <tbody class="divide-y">
+
+            @forelse($allTargets as $target)
+
+                @php
+                    $today = \Carbon\Carbon::today();
+                    $trBg = '';
+                    $trHover = '';
+                    $status = '';
+
+                    $valueColumn = $target->target_type === 'amount' ? 'amount' : 'boxes_sold';
+
+                    $validSales = $target->sales->filter(fn($sale) =>
+                        $sale->status === 'approved' &&
+                        $sale->accountant_status === 'approved'
+                    );
+
+                    $totalSales = $validSales->sum($valueColumn);
+
+                    if ($today->gt(\Carbon\Carbon::parse($target->end_date))) {
+                        $status = 'Expired';
+                        $trBg = 'bg-gray-100';
+                    } else {
+
+                        if ($totalSales >= $target->target_value) {
+                            $status = 'Achieved';
+                            $trBg = 'bg-green-100';
                         } else {
-                            $valueColumn = $target->target_type === 'amount' ? 'amount' : 'boxes_sold';
-
-                            $validSales = $target->sales->filter(fn($sale) => 
-                                $sale->status === 'approved' && $sale->accountant_status === 'approved'
-                            );
-
-                            $totalSales = $validSales->sum($valueColumn);
-
-                            $executiveCount = $target->executives_count ?? 1;
-                            $perExecutiveTarget = $target->target_value / max($executiveCount, 1);
-
-                            $executivesMetTarget = $validSales
-                                ->groupBy('executive_id')
-                                ->filter(fn($sales) => $sales->sum($valueColumn) >= $perExecutiveTarget)
-                                ->count();
-
-                            if ($totalSales >= $target->target_value) {
-                                if ($executivesMetTarget == $executiveCount) {
-                                    $status = 'Full Achieved';
-                                    $trBg = 'bg-green-100';
-                                    $trHover = 'hover:bg-green-100';
-                                } else {
-                                    $status = 'Partial Achieved';
-                                    $trBg = 'bg-yellow-100';
-                                    $trHover = 'hover:bg-yellow-100';
-                                }
-                            } else {
-                                $status = 'Not Achieved';
-                                $trBg = 'bg-red-100';
-                                $trHover = 'hover:bg-red-100';
-                            }
+                            $status = 'Not Achieved';
+                            $trBg = 'bg-red-100';
                         }
+                    }
 
-                        $remaining = max($target->target_value - $totalSales, 0);
-                    @endphp
+                    $remaining = max($target->target_value - $totalSales, 0);
 
-                    <tr class="{{ $trBg }} {{ $trHover }}">
-                        <td class="px-4 py-2">{{ $target->product?->name ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ ucfirst($target->target_type) }}</td>
-                        <td class="px-4 py-2">{{ $target->creator?->role?->name === 'Admin' ? 'Product Admin' : $target->creator?->name ?? 'Admin' }}</td>
-                        <td class="px-4 py-2">{{ $target->product?->type ?? '-' }}</td>
-                        <td class="px-4 py-2">
-                            @if($target->product?->expiry_date)
-                                {{ $target->product->expiry_date->format('d M Y') }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="px-4 py-2 text-center">{{ $target->target_value }}({{ ucfirst($target->target_type) }})</td>
-                        <td class="px-4 py-2 text-center text-green-700 font-semibold">{{ $totalSales }}({{ ucfirst($target->target_type) }})</td>
-                        <td class="px-4 py-2 text-center text-red-600">{{ $remaining }}({{ ucfirst($target->target_type) }})</td>
-                        <td class="px-4 py-2 text-center font-semibold">{{ $status }}</td>
-                        <td class="px-4 py-2 flex gap-2">
-                            <button @click="modalOpen = true; selectedTarget = {{ $target->id }}" 
-                                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-indigo-600 text-xs">
-                                View Sales
-                            </button>
-                            <button @click="teamModal = true; selectedTeamTarget = {{ $target->id }}" 
-                                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">
-                                View Team
-                            </button>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="10" class="text-center text-gray-400 py-4">No targets found</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                    // Detect Source
+                    $source = $targetsAssignedByAdmin->contains($target)
+                        ? 'Admin Assigned'
+                        : 'Executive Assigned';
+                @endphp
 
+                <tr class="{{ $trBg }} hover:bg-gray-50">
 
-    {{-- Tab 2: Assigned to Executive --}}
-    <div x-show="tab==='assignedToExecutive'" class="overflow-x-auto">
-        <table class="min-w-full border border-gray-200 rounded-lg text-sm">
-            <thead class="bg-gray-100 uppercase text-gray-700 text-xs">
-                <tr>
-                    <th class="px-4 py-2">Product</th>
-                    <th class="px-4 py-2">Target Type</th>
-                    <th class="px-4 py-2">Assigned By</th>
-                    <th class="px-4 py-2">Type</th>
-                    <th class="px-4 py-2">Expiry</th>
-                    <th class="px-4 py-2 text-center">Total Target</th>
-                    <th class="px-4 py-2 text-center">Achieved</th>
-                    <th class="px-4 py-2 text-center">Remaining</th>
-                    <th class="px-4 py-2 text-center">Status</th>
-                    <th class="px-4 py-2">Actions</th>
+                    <td class="px-4 py-2 font-semibold text-blue-600">
+                        {{ $source }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        {{ $target->product?->name ?? '-' }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        {{ ucfirst($target->target_type) }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        {{ $target->creator?->name ?? $target->parent?->creator?->name ?? 'Admin' }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        {{ $target->product?->type ?? '-' }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        @if($target->product?->expiry_date)
+                            {{ $target->product->expiry_date->format('d M Y') }}
+                        @else
+                            -
+                        @endif
+                    </td>
+
+                    <td class="px-4 py-2 text-center">
+                        {{ $target->target_value }}
+                        ({{ ucfirst($target->target_type) }})
+                    </td>
+
+                    <td class="px-4 py-2 text-center text-green-700 font-semibold">
+                        {{ $totalSales }}
+                    </td>
+
+                    <td class="px-4 py-2 text-center text-red-600">
+                        {{ $remaining }}
+                    </td>
+
+                    <td class="px-4 py-2 text-center font-semibold">
+                        {{ $status }}
+                    </td>
+
+                    <td class="px-4 py-2 flex gap-2">
+                        <button @click="modalOpen = true; selectedTarget = {{ $target->id }}"
+                                class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-indigo-600 text-xs">
+                            View Sales
+                        </button>
+
+                        <button @click="teamModal = true; selectedTeamTarget = {{ $target->id }}"
+                                class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">
+                            View Team
+                        </button>
+                    </td>
+
                 </tr>
-            </thead>
-            <tbody class="divide-y">
-                @forelse($targetsAssignedToExecutive as $target)
-                    @php
-                        $today = \Carbon\Carbon::today();
-                        $trBg = '';
-                        $trHover = '';
-                        $status = '';
 
-                        if ($today->gt(\Carbon\Carbon::parse($target->end_date))) {
-                            $status = 'Expired';
-                            $trBg = 'bg-gray-100';
-                            $trHover = 'hover:bg-gray-200';
-                        } else {
-                            $valueColumn = $target->target_type === 'amount' ? 'amount' : 'boxes_sold';
+            @empty
+                <tr>
+                    <td colspan="11" class="text-center text-gray-400 py-4">
+                        No targets found
+                    </td>
+                </tr>
+            @endforelse
 
-                            $validSales = $target->sales->filter(fn($sale) => 
-                                $sale->status === 'approved' && $sale->accountant_status === 'approved'
-                            );
-
-                            $totalSales = $validSales->sum($valueColumn);
-
-                            $executiveCount = $target->executives_count ?? 1;
-                            $perExecutiveTarget = $target->target_value / max($executiveCount, 1);
-
-                            $executivesMetTarget = $validSales
-                                ->groupBy('executive_id')
-                                ->filter(fn($sales) => $sales->sum($valueColumn) >= $perExecutiveTarget)
-                                ->count();
-
-                            if ($totalSales >= $target->target_value) {
-                                $status = $executivesMetTarget == $executiveCount 
-                                    ? 'Full Achieved' 
-                                    : 'Partial Achieved';
-                                $trBg = $executivesMetTarget == $executiveCount 
-                                    ? 'bg-green-100' 
-                                    : 'bg-yellow-100';
-                                $trHover = $trBg;
-                            } else {
-                                $status = 'Not Achieved';
-                                $trBg = 'bg-red-100';
-                                $trHover = 'hover:bg-red-100';
-                            }
-                        }
-
-                        $remaining = max($target->target_value - $totalSales, 0);
-                    @endphp
-
-                    <tr class="{{ $trBg }} {{ $trHover }}">
-                        <td class="px-4 py-2">{{ $target->product?->name ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ ucfirst($target->target_type) }}</td>
-                        <td class="px-4 py-2">{{ $target->parent?->creator?->role?->name === 'Admin' ? 'Product Admin' : $target->parent?->creator?->name ?? 'Admin' }}</td>
-                        <td class="px-4 py-2">{{ $target->product?->type ?? '-' }}</td>
-                        <td class="px-4 py-2">
-                            @if($target->product?->expiry_date)
-                                {{ $target->product->expiry_date->format('d M Y') }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="px-4 py-2 text-center">{{ $target->target_value }}({{ ucfirst($target->target_type) }})</td>
-                        <td class="px-4 py-2 text-center text-green-700 font-semibold">{{ $totalSales }}({{ ucfirst($target->target_type) }})</td>
-                        <td class="px-4 py-2 text-center text-red-600">{{ $remaining }}({{ ucfirst($target->target_type) }})</td>
-                        <td class="px-4 py-2 text-center font-semibold">{{ $status }}</td>
-                        <td class="px-4 py-2 flex gap-2">
-                            <button @click="modalOpen = true; selectedTarget = {{ $target->id }}" 
-                                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-indigo-600 text-xs">
-                                View Sales
-                            </button>
-                            <button @click="teamModal = true; selectedTeamTarget = {{ $target->id }}" 
-                                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">
-                                View Team
-                            </button>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="10" class="text-center text-gray-400 py-4">No targets found</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+        </tbody>
+    </table>
+</div>
 
 
     {{-- VIEW SALES MODAL --}}
