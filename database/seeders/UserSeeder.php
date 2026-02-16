@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         // Admin
         $admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'email' => 'info@servocaregroup.com',
             'password' => bcrypt('password'),
             'company_id' => $company->id
         ]);
@@ -26,28 +26,30 @@ class UserSeeder extends Seeder
         // Inventory Manager
         $inv = User::create([
             'name' => 'Inventory Manager',
-            'email' => 'inventory@example.com',
+            'email' => 'inventory@servocaregroup.com',
             'password' => bcrypt('password'),
             'company_id' => $company->id
         ]);
         $inv->assignRole('Inventory Manager');
+        
+         $acc = User::create([
+            'name' => 'Accountant User',
+            'email' => 'accountant@servocaregroup.com',
+            'password' => bcrypt('password'),
+            'company_id' => $company->id
+        ]);
+        $acc->assignRole('Accountant');
 
         // Executive
         $exe = User::create([
             'name' => 'Executive User',
-            'email' => 'executive@example.com',
+            'email' => 'executive@servocaregroup.com',
             'password' => bcrypt('password'),
             'company_id' => $company->id
         ]);
         $exe->assignRole('Executive');
 
         // Accountant
-        $acc = User::create([
-            'name' => 'Accountant User',
-            'email' => 'accountant@example.com',
-            'password' => bcrypt('password'),
-            'company_id' => $company->id
-        ]);
-        $acc->assignRole('Accountant');
+       
     }
 }
