@@ -130,6 +130,9 @@ Route::middleware(['auth', 'role:Admin'])
         Route::get('/notifications', [AdminDashboard::class,'notification'])->name('admin.notifications');
         Route::get('/notifications/read/{id}', [AdminDashboard::class,'markAsRead'])->name('admin.notifications.read');
 
+        Route::delete('/notifications/bulk-delete',[AdminDashboard::class, 'bulkDelete'])->name('admin.notifications.bulkDelete');
+        Route::delete('/notifications/{id}', [AdminDashboard::class, 'delete_notification'])->name('admin.notifications.delete');
+
         Route::get('/tracking-ips', [TrackingIpController::class, 'index'])
             ->name('admin.tracking.ips');
 
@@ -153,7 +156,7 @@ Route::middleware(['auth', 'role:Inventory Manager', 'ip.whitelist'])
         Route::get('/dashboard', [InventoryDashboard::class, 'index'])
             ->name('inventory.dashboard');
 
-        Route::post('/notify/{id}', [InventoryDashboard::class, 'notifyAdmin']);
+        Route::post('/notify/{product}', [InventoryDashboard::class, 'notifyAdmin']);
 
         Route::post('/target/store', [InventoryDashboard::class, 'storeTarget'])->name('inventory.target.store');
 

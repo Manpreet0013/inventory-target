@@ -85,6 +85,7 @@ class DashboardController extends Controller
     // ================= NOTIFY ADMIN =================
     public function notifyAdmin(Product $product)
     {
+        
         abort_if(!$product->expiry_date, 404);
 
         if ($product->notified_at) {

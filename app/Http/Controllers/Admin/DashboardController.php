@@ -410,10 +410,27 @@ class DashboardController extends Controller
     }
     public function notification()
     {
-        $notifications = Auth::user()->notifications()->latest()->get(); 
+        $notifications = Auth::user()->notifications()->latest()->paginate(10); 
         return view('admin.notifications.index', compact('notifications'));
     }
+    public function delete_notification($id)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        $notification->delete();
 
+        return back()->with('success', 'Notification deleted successfully.');
+    }
+    public function bulkDelete(Request $request)
+    {
+        if ($request->ids) {
+            auth()->user()
+                ->notifications()
+                ->whereIn('id', $request->ids)
+                ->delete();
+        }
+
+        return back()->with('success', 'Selected notifications deleted successfully.');
+    }
     public function markAsRead($id)
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
